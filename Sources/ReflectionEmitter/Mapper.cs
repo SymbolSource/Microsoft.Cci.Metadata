@@ -37,7 +37,7 @@ namespace Microsoft.Cci.ReflectionEmitter {
       var ident = assemblyReference.AssemblyIdentity;
       Assembly result = null;
       if (!this.assemblyMap.TryGetValue(ident, out result)) {
-        AssemblyName name = new AssemblyName();
+        var name = new System.Reflection.AssemblyName();
         if (!String.IsNullOrEmpty(ident.Location))
           name.CodeBase = new Uri(ident.Location).ToString();
         name.CultureInfo = new System.Globalization.CultureInfo(ident.Culture);
@@ -46,7 +46,7 @@ namespace Microsoft.Cci.ReflectionEmitter {
         name.Version = ident.Version;
         var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
         foreach (var loadedAssem in loadedAssemblies) {
-          if (AssemblyName.ReferenceMatchesDefinition(name, loadedAssem.GetName())) {
+          if (System.Reflection.AssemblyName.ReferenceMatchesDefinition(name, loadedAssem.GetName())) {
             result = loadedAssem;
             break;
           }
