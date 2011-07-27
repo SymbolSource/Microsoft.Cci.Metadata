@@ -37,7 +37,7 @@ namespace Microsoft.Cci.ReflectionEmitter {
       get {
         if (this.assemblyBuilder == null)
           this.assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(
-            new AssemblyName("CCI generated dynamic assembly "+this.GetHashCode()),
+            new System.Reflection.AssemblyName("CCI generated dynamic assembly "+this.GetHashCode()),
             AssemblyBuilderAccess.RunAndCollect);
         return this.assemblyBuilder;
       }
