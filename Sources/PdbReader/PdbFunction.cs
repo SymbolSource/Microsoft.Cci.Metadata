@@ -14,11 +14,11 @@ using System.Collections.Generic;
 
 namespace Microsoft.Cci.Pdb {
   internal class PdbFunction {
-    static internal readonly Guid msilMetaData = new Guid(0xc6ea3fc9, 0x59b3, 0x49d6, 0xbc, 0x25,
+    internal static readonly Guid msilMetaData = new Guid(0xc6ea3fc9, 0x59b3, 0x49d6, 0xbc, 0x25,
                                                         0x09, 0x02, 0xbb, 0xab, 0xb4, 0x60);
-    static internal readonly IComparer byAddress = new PdbFunctionsByAddress();
-    static internal readonly IComparer byAddressAndToken = new PdbFunctionsByAddressAndToken();
-    //static internal readonly IComparer byToken = new PdbFunctionsByToken();
+    internal static readonly IComparer byAddress = new PdbFunctionsByAddress();
+    internal static readonly IComparer byAddressAndToken = new PdbFunctionsByAddressAndToken();
+    //internal static readonly IComparer byToken = new PdbFunctionsByToken();
 
     internal uint token;
     internal uint slotToken;
