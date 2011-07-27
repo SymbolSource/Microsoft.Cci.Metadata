@@ -104,7 +104,7 @@ namespace ILMutator {
     ILGenerator currentGenerator;
     IEnumerator<ILocalScope>/*?*/ scopeEnumerator;
     bool scopeEnumeratorIsValid;
-    Stack<ILocalScope> scopeStack = new Stack<ILocalScope>();
+    System.Collections.Generic.Stack<ILocalScope> scopeStack = new System.Collections.Generic.Stack<ILocalScope>();
 
     public override IMethodBody Rewrite(IMethodBody methodBody) {
       try {

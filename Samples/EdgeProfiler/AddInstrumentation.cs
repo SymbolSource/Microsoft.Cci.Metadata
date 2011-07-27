@@ -28,7 +28,7 @@ namespace EdgeProfiler {
 
     IEnumerator<ILocalScope>/*?*/ scopeEnumerator;
     bool scopeEnumeratorIsValid;
-    Stack<ILocalScope> scopeStack = new Stack<ILocalScope>();
+    System.Collections.Generic.Stack<ILocalScope> scopeStack = new System.Collections.Generic.Stack<ILocalScope>();
 
     ILGenerator ilGenerator;
     NamedTypeDefinition counterFieldsForCurrentMethod;
