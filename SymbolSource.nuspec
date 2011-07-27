@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>SymbolSource.Microsoft.Cci.Metadata</id>
+	<version>1.0.0.0</version>
+    <authors>Microsoft</authors>
+    <owners>SymbolSource</owners>
+    <projectUrl>http://github.com/SymbolSource/Microsoft.Cci.Metadata</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+		This is a fork of Microsoft.Cci.Metadata, with all types made public. 
+		Upstram repository will be merged and republished occasionally.
+		Version number is equal to upastream SVN revision.
+	</description>
+  </metadata>
+  <files>
+    <file src="bin\Release\Microsoft.Cci.*.dll" target="lib" />
+	<file src="bin\Release\Microsoft.Cci.*.xml" target="lib" />
+	<file src="bin\Release\Microsoft.Cci.*.pdb" target="lib" /> 
+	<file src="Sources\**\*.cs" target="src" /> 
+  </files>
+</package>
