@@ -122,7 +122,7 @@ namespace Microsoft.Cci {
     uint FindMemberRef(uint td, string szName, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] byte[] pvSigBlob, uint cbSigBlob);
     uint GetMethodProps(uint mb, out uint pClass, IntPtr szMethod, uint cchMethod, out uint pchMethod, IntPtr pdwAttr,
       IntPtr ppvSigBlob, IntPtr pcbSigBlob, IntPtr pulCodeRVA);
-    unsafe uint GetMemberRefProps(uint mr, ref uint ptk, StringBuilder szMember, uint cchMember, out uint pchMember, out byte* ppvSigBlob);
+    uint GetMemberRefProps(uint mr, ref uint ptk, StringBuilder szMember, uint cchMember, out uint pchMember, out byte* ppvSigBlob);
     uint EnumProperties(ref uint phEnum, uint td, uint* rProperties, uint cMax);
     uint EnumEvents(ref uint phEnum, uint td, uint* rEvents, uint cMax);
     uint GetEventProps(uint ev, out uint pClass, StringBuilder szEvent, uint cchEvent, out uint pchEvent, out uint pdwEventFlags,
@@ -131,13 +131,13 @@ namespace Microsoft.Cci {
     uint EnumMethodSemantics(ref uint phEnum, uint mb, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] uint[] rEventProp, uint cMax);
     uint GetMethodSemantics(uint mb, uint tkEventProp);
     uint GetClassLayout(uint td, out uint pdwPackSize, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] COR_FIELD_OFFSET[] rFieldOffset, uint cMax, out uint pcFieldOffset);
-    unsafe uint GetFieldMarshal(uint tk, out byte* ppvNativeType);
+    uint GetFieldMarshal(uint tk, out byte* ppvNativeType);
     uint GetRVA(uint tk, out uint pulCodeRVA);
-    unsafe uint GetPermissionSetProps(uint pm, out uint pdwAction, out void* ppvPermission);
-    unsafe uint GetSigFromToken(uint mdSig, out byte* ppvSig);
+    uint GetPermissionSetProps(uint pm, out uint pdwAction, out void* ppvPermission);
+    uint GetSigFromToken(uint mdSig, out byte* ppvSig);
     uint GetModuleRefProps(uint mur, StringBuilder szName, uint cchName);
     uint EnumModuleRefs(ref uint phEnum, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2)] uint[] rModuleRefs, uint cmax);
-    unsafe uint GetTypeSpecFromToken(uint typespec, out byte* ppvSig);
+    uint GetTypeSpecFromToken(uint typespec, out byte* ppvSig);
     uint GetNameFromToken(uint tk);
     uint EnumUnresolvedMethods(ref uint phEnum, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2)] uint[] rMethods, uint cMax);
     uint GetUserString(uint stk, StringBuilder szString, uint cchString);
