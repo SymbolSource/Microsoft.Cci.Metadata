@@ -8,5 +8,5 @@
 // "In Project Suppression File". 
 // You do not need to add suppressions to this file manually. 
 
-[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Scope="member", Target="Microsoft.Cci.COR_FIELD_OFFSET.#.ctor(System.Object)")]
-[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId="dummy", Scope="member", Target="Microsoft.Cci.COR_FIELD_OFFSET.#.ctor(System.Object)")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Scope = "member", Target = "Microsoft.Cci.COR_FIELD_OFFSET.#.ctor(System.Object)")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "dummy", Scope = "member", Target = "Microsoft.Cci.COR_FIELD_OFFSET.#.ctor(System.Object)")]
