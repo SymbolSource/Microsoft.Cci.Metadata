@@ -40,7 +40,8 @@
     <WarningLevel>4</WarningLevel>
     <AssemblyOriginatorKeyFile>..\Common\InterimKey.snk</AssemblyOriginatorKeyFile>
     <DocumentationFile>bin\Debug\Microsoft.Cci.MetadataHelper.XML</DocumentationFile>
-    <WarningsAsErrors>1591</WarningsAsErrors>
+    <WarningsAsErrors>
+    </WarningsAsErrors>
     <NoWarn>
     </NoWarn>
     <RunCodeAnalysis>false</RunCodeAnalysis>
