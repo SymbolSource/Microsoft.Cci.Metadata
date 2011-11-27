@@ -914,7 +914,7 @@ namespace Microsoft.Cci
 	/// <summary>
 	/// A reference to the definition of a type parameter of a generic type or method.
 	/// </summary>
-	public interface IGenericParameterReference : ITypeReference, INamedEntity
+	public interface IGenericParameterReference : ITypeReference, INamedEntity, IParameterListEntry
 	{
 	}
 
@@ -1309,7 +1309,7 @@ namespace Microsoft.Cci
 	/// A reference to a type parameter of a generic method.
 	/// </summary>
 	[ContractClass(typeof(IGenericMethodParameterReferenceContract))]
-	public interface IGenericMethodParameterReference : IGenericParameterReference, IParameterListEntry
+	public interface IGenericMethodParameterReference : IGenericParameterReference
 	{
 
 		/// <summary>
@@ -1558,7 +1558,7 @@ namespace Microsoft.Cci
 	/// A reference to a type parameter of a generic type.
 	/// </summary>
 	[ContractClass(typeof(IGenericTypeParameterReferenceContract))]
-	public interface IGenericTypeParameterReference : IGenericParameterReference, IParameterListEntry
+	public interface IGenericTypeParameterReference : IGenericParameterReference
 	{
 
 		/// <summary>
@@ -1677,6 +1677,7 @@ namespace Microsoft.Cci
 	/// <summary>
 	/// A reference to a named type, such as an INamespaceTypeReference or an INestedTypeReference.
 	/// </summary>
+	[ContractClass(typeof(INamedTypeReferenceContract))]
 	public interface INamedTypeReference : ITypeReference, INamedEntity
 	{
 
@@ -1699,6 +1700,128 @@ namespace Microsoft.Cci
 		//^ ensures (this is INamedTypeDefinition) ==> result == this;
 
 	}
+
+	#region INamedTypeReference contract binding
+	[ContractClassFor(typeof(INamedTypeReference))]
+	public abstract class INamedTypeReferenceContract : INamedTypeReference
+	{
+		#region INamedTypeReference Members
+
+		public ushort GenericParameterCount {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool MangleName {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public INamedTypeDefinition ResolvedType {
+			get {
+				Contract.Ensures(Contract.Result<INamedTypeDefinition>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region ITypeReference Members
+
+		public IAliasForType AliasForType {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public uint InternedKey {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsAlias {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsEnum {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsValueType {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IPlatformType PlatformType {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		ITypeDefinition ITypeReference.ResolvedType {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public PrimitiveTypeCode TypeCode {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IReference Members
+
+		public IEnumerable<ICustomAttribute> Attributes {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public void Dispatch(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void DispatchAsReference(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region IObjectWithLocations Members
+
+		public IEnumerable<ILocation> Locations {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region INamedEntity Members
+
+		public IName Name {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+	}
+	#endregion
+
 
 	/// <summary>
 	/// A named type definition, such as an INamespaceTypeDefinition or an INestedTypeDefinition.
@@ -3009,6 +3132,11 @@ namespace Microsoft.Cci
 		INamespaceTypeReference SystemObject { get; }
 
 		/// <summary>
+		/// System.Reflection.AssemblySignatureKeyAttribute
+		/// </summary>
+		INamespaceTypeReference SystemReflectionAssemblySignatureKeyAttribute { get; }
+
+		/// <summary>
 		/// System.RuntimeArgumentHandle
 		/// </summary>
 		INamespaceTypeReference SystemRuntimeArgumentHandle { get; }
@@ -3431,6 +3559,13 @@ namespace Microsoft.Cci
 			get {
 				Contract.Ensures(Contract.Result<INamespaceTypeReference>() != null);
 				throw new NotImplementedException();
+			}
+		}
+
+		public INamespaceTypeReference SystemReflectionAssemblySignatureKeyAttribute {
+			get {
+				Contract.Ensures(Contract.Result<INamespaceTypeReference>() != null);
+				return Dummy.NamespaceTypeReference;
 			}
 		}
 
@@ -4413,8 +4548,8 @@ namespace Microsoft.Cci
 		/// include TypeRef tokens. A more accurate model of the metadata format would encode the information obtained from those signatures in a separate property of
 		/// the object containing the type reference, or would introduce a new kind of type reference such as INamespaceEnumTypeReference and INestedEnumTypeReference.
 		/// However, for historical/usability reasons this object model oversimplifies the situation by pretending that all type references can tell if they refer to enum types
-		/// or not. When consuming metadata, a type reference starts off with the value being false, but may change it to true as soon as it is token is encountered
-		/// in a signature that indicates that is is an enum type. In practise this means that a type reference encountered in a part of the object model where it is
+		/// or not. When consuming metadata, a type reference starts off with the value being false, but may change it to true as soon as its token is encountered
+		/// in a signature that indicates that is an enum type. In practice this means that a type reference encountered in a part of the object model where it is
 		/// important to know if the referenced type is an enum type, will get the right value from this property. However, if the value of this property is cached
 		/// as soon as it is encountered for the first time, the wrong value may get cached.
 		/// </remarks>
@@ -4435,8 +4570,8 @@ namespace Microsoft.Cci
 		/// include TypeRef tokens. A more accurate model of the metadata format would encode the information obtained from those signatures in a separate property of
 		/// the object containing the type reference, or would introduce a new kind of type reference such as INamespaceValueTypeReference and INestedValueTypeReference.
 		/// However, for historical/usability reasons this object model oversimplifies the situation by pretending that all type references can tell if they refer to value types
-		/// or not. When consuming metadata, a type reference starts off with the value being false, but may change it to true as soon as it is token is encountered
-		/// in a signature that indicates that is is a value type. In practise this means that a type reference encountered in a part of the object model where it is
+		/// or not. When consuming metadata, a type reference starts off with the value being false, but may change it to true as soon as its token is encountered
+		/// in a signature that indicates that is a value type. In practice this means that a type reference encountered in a part of the object model where it is
 		/// important to know if the referenced type is a value type, will get the right value from this property. However, if the value of this property is cached
 		/// as soon as it is encountered for the first time, the wrong value may get cached.
 		/// </remarks>

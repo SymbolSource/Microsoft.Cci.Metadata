@@ -46,17 +46,20 @@ namespace ILMutator {
           ILMutator mutator = new ILMutator(host, pdbReader);
           module = mutator.Rewrite(module);
 
-          string outputPath;
-          if (args.Length == 2)
-            outputPath = args[1];
-          else
-            outputPath = module.Location + ".pe";
+          string newName;
+          if (args.Length == 2) {
+            newName = args[1];
+          } else {
+            var loc = module.Location;
+            var path = Path.GetDirectoryName(loc);
+            var fileName = Path.GetFileNameWithoutExtension(loc);
+            var ext = Path.GetExtension(loc);
+            newName = Path.Combine(path, fileName + "1" + ext);
+          }
 
-          var outputFileName = Path.GetFileNameWithoutExtension(outputPath);
-
-          using (var outputStream = File.Create(outputPath)) {
-            using (var pdbWriter = new PdbWriter(outputFileName + ".pdb", pdbReader)) {
-              PeWriter.WritePeToStream(module, host, outputStream, pdbReader, localScopeProvider, pdbWriter);
+          using (var peStream = File.Create(newName)) {
+            using (var pdbWriter = new PdbWriter(Path.ChangeExtension(newName, ".pdb"), pdbReader)) {
+              PeWriter.WritePeToStream(module, host, peStream, pdbReader, localScopeProvider, pdbWriter);
             }
           }
         }
@@ -107,31 +110,26 @@ namespace ILMutator {
     System.Collections.Generic.Stack<ILocalScope> scopeStack = new System.Collections.Generic.Stack<ILocalScope>();
 
     public override IMethodBody Rewrite(IMethodBody methodBody) {
+      this.currentLocals = new List<ILocalDefinition>(methodBody.LocalVariables);
+
       try {
-        base.Rewrite(methodBody);
+        ProcessOperations(methodBody);
         var newBody = new ILGeneratorMethodBody(this.currentGenerator, methodBody.LocalsAreZeroed, (ushort)(methodBody.MaxStack + 1),
           methodBody.MethodDefinition, this.currentLocals ?? new List<ILocalDefinition>(), Enumerable<ITypeDefinition>.Empty);
         return newBody;
+      } catch (ILMutatorException) {
+        Console.WriteLine("Internal error during IL mutation for the method '{0}'.",
+          MemberHelper.GetMemberSignature(methodBody.MethodDefinition, NameFormattingOptions.SmartTypeName));
+        return methodBody;
       } finally {
         this.currentLocals = null;
       }
     }
 
-    public override void RewriteChildren(MethodBody methodBody) {
-      this.currentLocals = methodBody.LocalVariables;
+    private void ProcessOperations(IMethodBody methodBody) {
 
-      try {
-        ProcessOperations(methodBody);
-      } catch (ILMutatorException) {
-        Console.WriteLine("Internal error during IL mutation for the method '{0}'.",
-          MemberHelper.GetMemberSignature(methodBody.MethodDefinition, NameFormattingOptions.SmartTypeName));
-      }
-    }
-
-    private void ProcessOperations(MethodBody methodBody) {
-
-      List<IOperation> operations = methodBody.Operations??new List<IOperation>();
-      int count = methodBody.Operations.Count;
+      List<IOperation> operations = ((methodBody.Operations == null) ? new List<IOperation>(): new List<IOperation>(methodBody.Operations));
+      int count = operations.Count;
 
       ILGenerator generator = new ILGenerator(this.host, methodBody.MethodDefinition);
       if (this.pdbReader != null) {
@@ -306,12 +304,16 @@ namespace ILMutator {
             break;
           #endregion Branches
           #region Everything else
-          case OperationCode.Stloc:
           case OperationCode.Stloc_0:
           case OperationCode.Stloc_1:
           case OperationCode.Stloc_2:
           case OperationCode.Stloc_3:
+            generator.Emit(op.OperationCode);
+            EmitStoreLocal(generator, op);
+            break;
+          case OperationCode.Stloc:
           case OperationCode.Stloc_S:
+            generator.Emit(op.OperationCode, op.Value);
             EmitStoreLocal(generator, op);
             break;
           default:
@@ -451,7 +453,6 @@ namespace ILMutator {
             generator.Emit(OperationCode.Ldstr, localName);
             generator.Emit(OperationCode.Call, this.consoleDotWriteLine);
           }
-          generator.Emit(op.OperationCode, loc);
           break;
 
         case OperationCode.Stloc_0:
@@ -461,7 +462,6 @@ namespace ILMutator {
             generator.Emit(OperationCode.Ldstr, localName);
             generator.Emit(OperationCode.Call, this.consoleDotWriteLine);
           }
-          generator.Emit(op.OperationCode);
           break;
 
         case OperationCode.Stloc_1:
@@ -471,7 +471,6 @@ namespace ILMutator {
             generator.Emit(OperationCode.Ldstr, localName);
             generator.Emit(OperationCode.Call, this.consoleDotWriteLine);
           }
-          generator.Emit(op.OperationCode);
           break;
 
         case OperationCode.Stloc_2:
@@ -481,7 +480,6 @@ namespace ILMutator {
             generator.Emit(OperationCode.Ldstr, localName);
             generator.Emit(OperationCode.Call, this.consoleDotWriteLine);
           }
-          generator.Emit(op.OperationCode);
           break;
 
         case OperationCode.Stloc_3:
@@ -491,7 +489,6 @@ namespace ILMutator {
             generator.Emit(OperationCode.Ldstr, localName);
             generator.Emit(OperationCode.Call, this.consoleDotWriteLine);
           }
-          generator.Emit(op.OperationCode);
           break;
 
         default:

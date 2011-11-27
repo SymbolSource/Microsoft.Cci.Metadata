@@ -824,7 +824,7 @@ namespace Microsoft.Cci.MetadataReader.PEFile
 		public const int SizeofOptionalHeaderNTAdditionalFields32 = 68;
 		public const int SizeofOptionalHeaderNTAdditionalFields64 = 88;
 		public const int NumberofOptionalHeaderDirectoryEntries = 16;
-		public const int SizeofOptionalHeaderDirectoriesEntries = 64;
+		public const int SizeofOptionalHeaderDirectoriesEntries = 16 * 8;
 		public const int SizeofSectionHeader = 40;
 		public const int SizeofSectionName = 8;
 		public const int SizeofResourceDirectory = 16;
@@ -852,7 +852,6 @@ namespace Microsoft.Cci.MetadataReader.PEFile
 		public uint SizeOfData;
 		public uint AddressOfRawData;
 		public uint PointerToRawData;
-		public byte[] Data;
 	}
 
 	public struct OptionalHeaderStandardFields

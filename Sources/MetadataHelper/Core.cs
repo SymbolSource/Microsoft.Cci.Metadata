@@ -210,7 +210,7 @@ namespace Microsoft.Cci
 		/// <summary>
 		/// Returns an identity that is the same as CoreAssemblyIdentity, except that the name is "System.Core" and the version is at least 3.5.
 		/// </summary>
-		public AssemblyIdentity GetSystemCoreAssemblySymbolicIdentity()
+		public virtual AssemblyIdentity GetSystemCoreAssemblySymbolicIdentity()
 		{
 			var core = this.CoreAssemblySymbolicIdentity;
 			var name = this.NameTable.GetNameFor("System.Core");
@@ -420,7 +420,6 @@ namespace Microsoft.Cci
 			return new PlatformType(this);
 		}
 
-
 		/// <summary>
 		/// The size (in bytes) of a pointer on the platform on which the host is targetting.
 		/// The value of this property is either 4 (32-bits) or 8 (64-bit).
@@ -463,12 +462,14 @@ namespace Microsoft.Cci
 
 		/// <summary>
 		/// Looks in the specified <paramref name="probeDir"/> to see if a file
-		/// exists, first with the extension "dll" and then with the extension "exe".
+		/// exists, first with the extension "dll" and then with the extensions "winmd" and "exe".
 		/// Returns null if not found, otherwise constructs a new AssemblyIdentity
 		/// </summary>
-		public AssemblyIdentity Probe(		/*?*/string probeDir, AssemblyIdentity referencedAssembly)
+		public virtual AssemblyIdentity Probe(		/*?*/string probeDir, AssemblyIdentity referencedAssembly)
 		{
 			string path = Path.Combine(probeDir, referencedAssembly.Name.Value + ".dll");
+			if (!File.Exists(path))
+				path = Path.Combine(probeDir, referencedAssembly.Name.Value + ".winmd");
 			if (!File.Exists(path))
 				path = Path.Combine(probeDir, referencedAssembly.Name.Value + ".exe");
 			if (!File.Exists(path))

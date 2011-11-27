@@ -33,11 +33,14 @@ namespace Microsoft.Cci.MetadataReader.ObjectModelImplementation
 	/// </summary>
 	public abstract class MetadataObject : IReference, IMetadataObjectWithToken
 	{
+
 		public PEFileToObjectModel PEFileToObjectModel;
+
 		public MetadataObject(PEFileToObjectModel peFileToObjectModel)
 		{
 			this.PEFileToObjectModel = peFileToObjectModel;
 		}
+
 		public abstract uint TokenValue { get; }
 
 		public IPlatformType PlatformType {
@@ -93,9 +96,89 @@ namespace Microsoft.Cci.MetadataReader.ObjectModelImplementation
 	/// </summary>
 	public abstract class MetadataDefinitionObject : MetadataObject, IDefinition
 	{
+
 		public MetadataDefinitionObject(PEFileToObjectModel peFileToObjectModel) : base(peFileToObjectModel)
 		{
+			this.locations = IteratorHelper.GetSingletonEnumerable<ILocation>(new MetadataLocation(peFileToObjectModel.document, this));
 		}
+
+		public override IEnumerable<ILocation> Locations {
+			get { return this.locations; }
+		}
+		IEnumerable<ILocation> locations;
+
+	}
+
+	/// <summary>
+	/// 
+	/// </summary>
+	public sealed class MetadataObjectDocument : IDocument
+	{
+
+		public MetadataObjectDocument(PEFileToObjectModel peFileToObjectModel)
+		{
+			this.peFileToObjectModel = peFileToObjectModel;
+		}
+
+		PEFileToObjectModel peFileToObjectModel;
+
+		/// <summary>
+		/// The location where this document was found, or where it should be stored.
+		/// This will also uniquely identify the source document within an instance of compilation host.
+		/// </summary>
+		public string Location {
+			get { return this.peFileToObjectModel.Module.ModuleIdentity.Location; }
+		}
+
+		/// <summary>
+		/// The name of the document. For example the name of the file if the document corresponds to a file.
+		/// </summary>
+		public IName Name {
+			get { return this.peFileToObjectModel.Module.ModuleIdentity.Name; }
+		}
+
+	}
+
+	/// <summary>
+	/// 
+	/// </summary>
+	public sealed class MetadataLocation : IMetadataLocation
+	{
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="document"></param>
+		/// <param name="definition"></param>
+		public MetadataLocation(IDocument document, IMetadataObjectWithToken definition)
+		{
+			this.document = document;
+			this.definition = definition;
+		}
+
+		#region IMetadataLocation Members
+
+		/// <summary>
+		/// The metadata object whose definition contains this location.
+		/// </summary>
+		public IMetadataObjectWithToken Definition {
+			get { return this.definition; }
+		}
+		IMetadataObjectWithToken definition;
+
+		#endregion
+
+		#region ILocation Members
+
+		/// <summary>
+		/// The document containing this location.
+		/// </summary>
+		public IDocument Document {
+			get { return this.document; }
+		}
+		IDocument document;
+
+		#endregion
 	}
 
 	public enum ContainerState : byte
@@ -2164,9 +2247,9 @@ namespace Microsoft.Cci.MetadataReader.ObjectModelImplementation
 
 		#region ITokenDecoder Members
 
-		public IMetadataObjectWithToken GetObjectForToken(uint token)
+		public object GetObjectForToken(uint token)
 		{
-			return this.PEFileToObjectModel.GetReferenceForToken(this, token) as IMetadataObjectWithToken;
+			return this.PEFileToObjectModel.GetReferenceForToken(this, token);
 		}
 
 		#endregion

@@ -2990,8 +2990,11 @@ namespace Microsoft.Cci.MutableCodeModel
 				ITypeReference containingTypeReference = null;
 				if (nestedType.ContainingTypeDefinition.IsGeneric)
 					containingTypeReference = nestedType.ContainingTypeDefinition.InstanceType;
-				else
+				else {
 					containingTypeReference = this.GetSpecializedType((INamedTypeDefinition)nestedType.ContainingTypeDefinition);
+					if (containingTypeReference == nestedType.ContainingTypeDefinition)
+						return typeDef;
+				}
 				return new SpecializedNestedTypeReference {
 					ContainingType = containingTypeReference,
 					InternFactory = this.InternFactory,

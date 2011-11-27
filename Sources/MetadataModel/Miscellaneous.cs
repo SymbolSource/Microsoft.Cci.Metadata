@@ -97,6 +97,16 @@ namespace Microsoft.Cci
 	public delegate R Function<P, R>(P p);
 
 	/// <summary>
+	/// A Function that takes an argument of type P, an argument of type Q, and returns a value of type R.
+	/// </summary>
+	public delegate R Function<P, Q, R>(P p, Q q);
+
+	/// <summary>
+	/// An action that takes an argument of type P and an argument of type R.
+	/// </summary>
+	public delegate void Action<P, R>(P p, R r);
+
+	/// <summary>
 	/// A container for static helper methods that are used for manipulating and computing iterators.
 	/// </summary>
 	public static class IteratorHelper
@@ -152,6 +162,25 @@ namespace Microsoft.Cci
 					return false;
 			}
 			return !rightEnum.MoveNext();
+		}
+
+		/// <summary>
+		/// Returns an array whose elements are those returned by the given enumerable.
+		/// </summary>
+		public static T[] GetAsArray<T>(IEnumerable<T> enumerable)
+		{
+			Contract.Ensures(Contract.Result<T[]>() != null);
+			if (enumerable == null)
+				return new T[0];
+			var collection = enumerable as ICollection<T>;
+			if (collection != null) {
+				var n = collection.Count;
+				var a = new T[n];
+				collection.CopyTo(a, 0);
+				return a;
+			}
+			var list = new List<T>(enumerable);
+			return list.ToArray();
 		}
 
 		/// <summary>
@@ -492,6 +521,36 @@ namespace Microsoft.Cci
 					yield return e;
 		}
 
+		/// <summary>
+		/// A zip join implementation that walks two enumerables performing some function
+		/// on corresponding elements and returning an enumerable of the result of the
+		/// function.
+		/// </summary>
+		public static IEnumerable<TResult> Zip<TFirst, TSecond, TResult>(IEnumerable<TFirst> first, IEnumerable<TSecond> second, Function<TFirst, TSecond, TResult> resultSelector)
+		{
+			Contract.Requires(first != null);
+			Contract.Requires(second != null);
+			Contract.Requires(resultSelector != null);
+			using (IEnumerator<TFirst> e1 = first.GetEnumerator())
+				using (IEnumerator<TSecond> e2 = second.GetEnumerator())
+					while (e1.MoveNext() && e2.MoveNext())
+						yield return resultSelector(e1.Current, e2.Current);
+		}
+		/// <summary>
+		/// A zip join implementation that walks two enumerables performing some action
+		/// on corresponding elements.
+		/// </summary>
+		public static void Zip<TFirst, TSecond>(IEnumerable<TFirst> first, IEnumerable<TSecond> second, Action<TFirst, TSecond> action)
+		{
+			Contract.Requires(first != null);
+			Contract.Requires(second != null);
+			Contract.Requires(action != null);
+			using (IEnumerator<TFirst> e1 = first.GetEnumerator())
+				using (IEnumerator<TSecond> e2 = second.GetEnumerator())
+					while (e1.MoveNext() && e2.MoveNext())
+						action(e1.Current, e2.Current);
+		}
+
 	}
 
 	/// <summary>
@@ -536,6 +595,7 @@ namespace Microsoft.Cci
 	/// <summary>
 	/// A single CLR IL operation.
 	/// </summary>
+	[ContractClass(typeof(IOperationContract))]
 	public interface IOperation
 	{
 
@@ -560,9 +620,42 @@ namespace Microsoft.Cci
 		object Value { get; }
 			/*?*/			}
 
+	#region IOperation contract binding
+	[ContractClassFor(typeof(IOperation))]
+	public abstract class IOperationContract : IOperation
+	{
+		public OperationCode OperationCode {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public uint Offset {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ILocation Location {
+			get {
+				Contract.Ensures(Contract.Result<ILocation>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public object Value {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+	}
+	#endregion
+
+
 	/// <summary>
 	/// A metadata custom attribute.
 	/// </summary>
+	[ContractClass(typeof(ICustomAttributeContract))]
 	public interface ICustomAttribute
 	{
 
@@ -592,6 +685,51 @@ namespace Microsoft.Cci
 		/// </summary>
 		ITypeReference Type { get; }
 	}
+
+	#region ICustomAttribute contract binding
+	[ContractClassFor(typeof(ICustomAttribute))]
+	public abstract class ICustomAttributeContract : ICustomAttribute
+	{
+		#region ICustomAttribute Members
+
+		public IEnumerable<IMetadataExpression> Arguments {
+			get {
+				Contract.Ensures(Contract.Result<IEnumerable<IMetadataExpression>>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public IMethodReference Constructor {
+			get {
+				Contract.Ensures(Contract.Result<IMethodReference>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<IMetadataNamedArgument> NamedArguments {
+			get {
+				Contract.Ensures(Contract.Result<IEnumerable<IMetadataNamedArgument>>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public ushort NumberOfNamedArguments {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ITypeReference Type {
+			get {
+				Contract.Ensures(Contract.Result<ITypeReference>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+	}
+	#endregion
+
 
 	/// <summary>
 	/// Represents a file referenced by an assembly.

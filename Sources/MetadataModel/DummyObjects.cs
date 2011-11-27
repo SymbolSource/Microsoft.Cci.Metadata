@@ -5000,6 +5000,10 @@ namespace Microsoft.Cci
 			get { return Dummy.NamespaceTypeReference; }
 		}
 
+		public INamespaceTypeReference SystemReflectionAssemblySignatureKeyAttribute {
+			get { return Dummy.NamespaceTypeReference; }
+		}
+
 		public INamespaceTypeReference SystemRuntimeArgumentHandle {
 			get { return Dummy.NamespaceTypeReference; }
 		}

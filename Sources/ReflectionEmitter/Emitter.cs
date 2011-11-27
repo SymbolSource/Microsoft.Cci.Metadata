@@ -1,11 +1,18 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright (c) Microsoft. All rights reserved.
+// This code is licensed under the Microsoft Public License.
+// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+//-----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.SymbolStore;
 using System.Reflection;
 using System.Reflection.Emit;
-using System;
-using Microsoft.Cci.UtilityDataStructures;
-using System.Diagnostics.Contracts;
-using System.IO;
-using System.Diagnostics.SymbolStore;
 
 namespace Microsoft.Cci.ReflectionEmitter
 {
@@ -607,7 +614,7 @@ namespace Microsoft.Cci.ReflectionEmitter
 			DynamicLoader loader;
 			Dictionary<uint, Label> labelFor;
 			Dictionary<ILocalDefinition, LocalBuilder> localFor;
-			ILGenerator ilGenerator;
+			System.Reflection.Emit.ILGenerator ilGenerator;
 			IMethodBody methodBody;
 			ISourceLocationProvider 			/*?*/sourceLocationProvider;
 			ILocalScopeProvider 			/*?*/localScopeProvider;
@@ -1005,7 +1012,7 @@ namespace Microsoft.Cci.ReflectionEmitter
 				}
 			}
 
-			public void EmitIL(ILGenerator ilGenerator, IMethodBody methodBody)
+			public void EmitIL(System.Reflection.Emit.ILGenerator ilGenerator, IMethodBody methodBody)
 			{
 				//this is painful and slow, but it seems to be the only way to get debugging information into a dynamic assembly.
 				this.ilGenerator = ilGenerator;

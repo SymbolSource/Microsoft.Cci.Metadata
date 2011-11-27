@@ -222,6 +222,7 @@ namespace Microsoft.Cci
 		public ISectionBlock FieldMapping {
 			get {
 				Contract.Requires(this.IsMapped);
+				Contract.Ensures(Contract.Result<ISectionBlock>() != null);
 				throw new NotImplementedException();
 			}
 		}
@@ -559,7 +560,8 @@ namespace Microsoft.Cci
 	/// <summary>
 	/// Exception information of the method body expressed in terms of offsets in CLR IL.
 	/// </summary>
-	public partial interface IOperationExceptionInformation
+	[ContractClass(typeof(IOperationExceptionInformationContract))]
+	public interface IOperationExceptionInformation
 	{
 		/// <summary>
 		/// Handler kind for this SEH info
@@ -598,13 +600,6 @@ namespace Microsoft.Cci
 		uint HandlerEndOffset { get; }
 	}
 
-	#region IOperationExceptionInformation contract binding
-	[ContractClass(typeof(IOperationExceptionInformationContract))]
-	public partial interface IOperationExceptionInformation
-	{
-
-	}
-
 	[ContractClassFor(typeof(IOperationExceptionInformation))]
 	public abstract class IOperationExceptionInformationContract : IOperationExceptionInformation
 	{
@@ -631,6 +626,7 @@ namespace Microsoft.Cci
 
 		public uint TryEndOffset {
 			get {
+				Contract.Ensures(Contract.Result<uint>() >= this.TryStartOffset);
 				throw new NotImplementedException();
 			}
 		}
@@ -643,19 +639,20 @@ namespace Microsoft.Cci
 
 		public uint HandlerStartOffset {
 			get {
+				Contract.Ensures(Contract.Result<uint>() > this.FilterDecisionStartOffset);
 				throw new NotImplementedException();
 			}
 		}
 
 		public uint HandlerEndOffset {
 			get {
+				Contract.Ensures(Contract.Result<uint>() >= this.HandlerStartOffset);
 				throw new NotImplementedException();
 			}
 		}
 
 		#endregion
 	}
-	#endregion
 
 	/// <summary>
 	/// An object that represents a local variable or constant.
@@ -2068,6 +2065,7 @@ namespace Microsoft.Cci
 	/// <summary>
 	/// Represents reference specialized field.
 	/// </summary>
+	[ContractClass(typeof(ISpecializedFieldReferenceContract))]
 	public interface ISpecializedFieldReference : IFieldReference
 	{
 
@@ -2080,9 +2078,124 @@ namespace Microsoft.Cci
 		IFieldReference UnspecializedVersion { get; }
 	}
 
+	#region ISpecializedFieldReference contract binding
+	[ContractClassFor(typeof(ISpecializedFieldReference))]
+	public abstract class ISpecializedFieldReferenceContract : ISpecializedFieldReference
+	{
+		#region ISpecializedFieldReference Members
+
+		public IFieldReference UnspecializedVersion {
+			get {
+				Contract.Ensures(Contract.Result<IFieldReference>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IFieldReference Members
+
+		public IEnumerable<ICustomModifier> CustomModifiers {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public uint InternedKey {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsModified {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsStatic {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ITypeReference Type {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IFieldDefinition ResolvedField {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region ITypeMemberReference Members
+
+		public ITypeReference ContainingType {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IReference Members
+
+		public IEnumerable<ICustomAttribute> Attributes {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public void Dispatch(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void DispatchAsReference(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region IObjectWithLocations Members
+
+		public IEnumerable<ILocation> Locations {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region INamedEntity Members
+
+		public IName Name {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+	}
+	#endregion
+
+
 	/// <summary>
 	/// Represents the specialized method definition.
 	/// </summary>
+	[ContractClass(typeof(ISpecializedMethodDefinitionContract))]
 	public interface ISpecializedMethodDefinition : IMethodDefinition, ISpecializedMethodReference
 	{
 
@@ -2094,6 +2207,432 @@ namespace Microsoft.Cci
 		new IMethodDefinition UnspecializedVersion { get; }
 			/*!*/
 			}
+
+	#region ISpecializedMethodDefinition contract binding
+	[ContractClassFor(typeof(ISpecializedMethodDefinition))]
+	public abstract class ISpecializedMethodDefinitionContract : ISpecializedMethodDefinition
+	{
+		#region ISpecializedMethodDefinition Members
+
+		public IMethodDefinition UnspecializedVersion {
+			get {
+				Contract.Ensures(Contract.Result<IMethodDefinition>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IMethodDefinition Members
+
+		public IMethodBody Body {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<IGenericMethodParameter> GenericParameters {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool HasDeclarativeSecurity {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool HasExplicitThisParameter {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsAbstract {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsAccessCheckedOnOverride {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsAggressivelyInlined {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsCil {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsConstructor {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsExternal {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsForwardReference {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsHiddenBySignature {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsNativeCode {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsNewSlot {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsNeverInlined {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsNeverOptimized {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsPlatformInvoke {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsRuntimeImplemented {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsRuntimeInternal {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsRuntimeSpecial {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsSealed {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsSpecialName {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsStaticConstructor {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsSynchronized {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsVirtual {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsUnmanaged {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<IParameterDefinition> Parameters {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool PreserveSignature {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IPlatformInvokeInformation PlatformInvokeData {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool RequiresSecurityObject {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<ICustomAttribute> ReturnValueAttributes {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool ReturnValueIsMarshalledExplicitly {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IMarshallingInformation ReturnValueMarshallingInformation {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IName ReturnValueName {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<ISecurityAttribute> SecurityAttributes {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region ITypeDefinitionMember Members
+
+		public ITypeDefinition ContainingTypeDefinition {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public TypeMemberVisibility Visibility {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region ITypeMemberReference Members
+
+		public ITypeReference ContainingType {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IReference Members
+
+		public IEnumerable<ICustomAttribute> Attributes {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public void Dispatch(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void DispatchAsReference(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region IObjectWithLocations Members
+
+		public IEnumerable<ILocation> Locations {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region INamedEntity Members
+
+		public IName Name {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IContainerMember<ITypeDefinition> Members
+
+		public ITypeDefinition Container {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
+
+		public IScope<ITypeDefinitionMember> ContainingScope {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IMethodReference Members
+
+		public bool AcceptsExtraArguments {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ushort GenericParameterCount {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public uint InternedKey {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsGeneric {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ushort ParameterCount {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IMethodDefinition ResolvedMethod {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<IParameterTypeInformation> ExtraParameters {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region ISignature Members
+
+		public CallingConvention CallingConvention {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsStatic {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		IEnumerable<IParameterTypeInformation> ISignature.Parameters {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<ICustomModifier> ReturnValueCustomModifiers {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool ReturnValueIsByRef {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool ReturnValueIsModified {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ITypeReference Type {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region ISpecializedMethodReference Members
+
+		IMethodReference ISpecializedMethodReference.UnspecializedVersion {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+	}
+	#endregion
+
 
 	/// <summary>
 	/// Represents reference specialized method.
@@ -2319,6 +2858,7 @@ namespace Microsoft.Cci
 	/// <summary>
 	/// A reference to generic method instantiated with a list of type arguments.
 	/// </summary>
+	[ContractClass(typeof(IGenericMethodInstanceReferenceContract))]
 	public interface IGenericMethodInstanceReference : IMethodReference
 	{
 
@@ -2335,6 +2875,180 @@ namespace Microsoft.Cci
 		//^ ensures result.ResolvedMethod.IsGeneric;
 
 	}
+
+	#region IGenericMethodInstanceReference contract binding
+
+	[ContractClassFor(typeof(IGenericMethodInstanceReference))]
+	public abstract class IGenericMethodInstanceReferenceContract : IGenericMethodInstanceReference
+	{
+		#region IGenericMethodInstanceReference Members
+
+		public IEnumerable<ITypeReference> GenericArguments {
+			get {
+				Contract.Ensures(Contract.Result<IEnumerable<ITypeReference>>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public IMethodReference GenericMethod {
+			get {
+				Contract.Ensures(Contract.Result<IMethodReference>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IMethodReference Members
+
+		public bool AcceptsExtraArguments {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ushort GenericParameterCount {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public uint InternedKey {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsGeneric {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ushort ParameterCount {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IMethodDefinition ResolvedMethod {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<IParameterTypeInformation> ExtraParameters {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region ISignature Members
+
+		public CallingConvention CallingConvention {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsStatic {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<IParameterTypeInformation> Parameters {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<ICustomModifier> ReturnValueCustomModifiers {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool ReturnValueIsByRef {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool ReturnValueIsModified {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ITypeReference Type {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region ITypeMemberReference Members
+
+		public ITypeReference ContainingType {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IReference Members
+
+		public IEnumerable<ICustomAttribute> Attributes {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public void Dispatch(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void DispatchAsReference(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region IObjectWithLocations Members
+
+		public IEnumerable<ILocation> Locations {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region INamedEntity Members
+
+		public IName Name {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+	}
+	#endregion
+
 
 	/// <summary>
 	/// Represents a global field in symbol table.

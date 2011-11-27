@@ -10,15 +10,13 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.IO;
-using Microsoft.Cci;
-using Microsoft.Cci.Pdb;
-using Microsoft.Cci.MetadataReader;
-using System.Text;
 using System.Diagnostics.SymbolStore;
+using System.IO;
+using Microsoft.Cci.MetadataReader;
 
 namespace Microsoft.Cci
 {
+	using Microsoft.Cci.Pdb;
 
 	/// <summary>
 	/// An object that can map offsets in an IL stream to source locations and block scopes.
@@ -29,6 +27,7 @@ namespace Microsoft.Cci
 		IMetadataHost host;
 		Dictionary<uint, PdbFunction> pdbFunctionMap = new Dictionary<uint, PdbFunction>();
 		List<StreamReader> sourceFilesOpenedByReader = new List<StreamReader>();
+		Dictionary<uint, PdbTokenLine> tokenToSourceMapping;
 
 		/// <summary>
 		/// Allocates an object that can map some kinds of ILocation objects to IPrimarySourceLocation objects. 
@@ -37,7 +36,7 @@ namespace Microsoft.Cci
 		public PdbReader(Stream pdbStream, IMetadataHost host)
 		{
 			this.host = host;
-			foreach (PdbFunction pdbFunction in PdbFile.LoadFunctions(pdbStream, true))
+			foreach (PdbFunction pdbFunction in PdbFile.LoadFunctions(pdbStream, out this.tokenToSourceMapping))
 				this.pdbFunctionMap[pdbFunction.token] = pdbFunction;
 		}
 
@@ -79,6 +78,15 @@ namespace Microsoft.Cci
 					psloc = this.MapMethodBodyLocationToSourceLocation(mbLocation, true);
 					if (psloc != null)
 						yield return psloc;
+				} else {
+					var mdLocation = location as IMetadataLocation;
+					if (mdLocation != null) {
+						PdbTokenLine lineInfo;
+						if (!this.tokenToSourceMapping.TryGetValue(mdLocation.Definition.TokenValue, out lineInfo))
+							yield break;
+						PdbSourceDocument psDoc = this.GetPrimarySourceDocumentFor(lineInfo.sourceFile);
+						yield return new PdbSourceLineLocation(psDoc, (int)lineInfo.line, (int)lineInfo.column, (int)lineInfo.endLine, (int)lineInfo.endColumn);
+					}
 				}
 			}
 		}
@@ -113,11 +121,20 @@ namespace Microsoft.Cci
 			if (psloc != null)
 				yield return psloc;
 			else {
-				IILLocation 				/*?*/mbLocation = location as IILLocation;
+				var mbLocation = location as IILLocation;
 				if (mbLocation != null) {
 					psloc = this.MapMethodBodyLocationToSourceLocation(mbLocation, true);
 					if (psloc != null)
 						yield return psloc;
+				} else {
+					var mdLocation = location as IMetadataLocation;
+					if (mdLocation != null) {
+						PdbTokenLine lineInfo;
+						if (!this.tokenToSourceMapping.TryGetValue(mdLocation.Definition.TokenValue, out lineInfo))
+							yield break;
+						PdbSourceDocument psDoc = this.GetPrimarySourceDocumentFor(lineInfo.sourceFile);
+						yield return new PdbSourceLineLocation(psDoc, (int)lineInfo.line, (int)lineInfo.column, (int)lineInfo.endLine, (int)lineInfo.endColumn);
+					}
 				}
 			}
 		}
@@ -141,6 +158,19 @@ namespace Microsoft.Cci
 			}
 		}
 
+		/// <summary>
+		/// Returns zero or more locations in primary source documents that correspond to the definition with the given token.
+		/// </summary>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		public IEnumerable<IPrimarySourceLocation> GetPrimarySourceLocationsForToken(uint token)
+		{
+			PdbTokenLine lineInfo;
+			if (!this.tokenToSourceMapping.TryGetValue(token, out lineInfo))
+				yield break;
+			PdbSourceDocument psDoc = this.GetPrimarySourceDocumentFor(lineInfo.sourceFile);
+			yield return new PdbSourceLineLocation(psDoc, (int)lineInfo.line, (int)lineInfo.column, (int)lineInfo.endLine, (int)lineInfo.endColumn);
+		}
 
 		/// <summary>
 		/// Return zero or more locations in primary source documents that correspond to the definition of the given local.
@@ -461,6 +491,10 @@ namespace Microsoft.Cci
 
 	}
 
+}
+
+namespace Microsoft.Cci.Pdb
+{
 	public sealed class UsedNamespace : IUsedNamespace
 	{
 

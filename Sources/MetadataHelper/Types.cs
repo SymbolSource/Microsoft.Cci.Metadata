@@ -14,7 +14,6 @@ using System.Diagnostics;
 using System.Text;
 using System.Diagnostics.Contracts;
 
-//^ using Microsoft.Contracts;
 #pragma warning disable 1591
 
 namespace Microsoft.Cci.Immutable
@@ -145,12 +144,6 @@ namespace Microsoft.Cci.Immutable
 
 		public virtual IEnumerable<ulong> Sizes {
 			get { return Enumerable<ulong>.Empty; }
-		}
-
-		//^ [Confined]
-		public override string ToString()
-		{
-			return TypeHelper.GetTypeName(this, NameFormattingOptions.None);
 		}
 
 		#region ITypeDefinition Members
@@ -432,7 +425,7 @@ namespace Microsoft.Cci.Immutable
 		}
 
 		public virtual IEnumerable<ICustomAttribute> Attributes {
-			get { return Enumerable<ICustomAttribute>.Empty; }
+			get { return this.GenericType.Attributes; }
 		}
 
 		public IEnumerable<ITypeReference> BaseClasses {
@@ -805,19 +798,9 @@ namespace Microsoft.Cci.Immutable
 			get { return this.GenericType.ResolvedType.SizeOf; }
 		}
 
-		//^ [Confined]
 		public override string ToString()
 		{
-			StringBuilder sb = new StringBuilder();
-			sb.Append(this.GenericType.ResolvedType.ToString());
-			sb.Append('<');
-			foreach (ITypeReference arg in this.GenericArguments) {
-				if (sb[sb.Length - 1] != '<')
-					sb.Append(',');
-				sb.Append(arg.ResolvedType.ToString());
-			}
-			sb.Append('>');
-			return sb.ToString();
+			return TypeHelper.GetTypeName(this);
 		}
 
 		public PrimitiveTypeCode TypeCode {
@@ -1309,12 +1292,6 @@ namespace Microsoft.Cci.Immutable
 			return GetManagedPointerType(specializedtargetType, internFactory);
 		}
 
-		//^ [Confined]
-		public override string ToString()
-		{
-			return this.TargetType.ToString() + "&";
-		}
-
 		public ITypeReference TargetType {
 			get { return this.targetType; }
 		}
@@ -1579,12 +1556,6 @@ namespace Microsoft.Cci.Immutable
 			get { return this.targetType; }
 		}
 		readonly ITypeReference targetType;
-
-		//^ [Confined]
-		public override string ToString()
-		{
-			return this.TargetType.ResolvedType.ToString() + "*";
-		}
 
 		public override PrimitiveTypeCode TypeCode {
 			get { return PrimitiveTypeCode.Pointer; }
@@ -3624,7 +3595,7 @@ namespace Microsoft.Cci.Immutable
 		}
 
 		public bool IsEnum {
-			get { return false; }
+			get { return this.UnspecializedVersion.IsEnum; }
 		}
 
 		public bool IsValueType {
@@ -3849,6 +3820,11 @@ namespace Microsoft.Cci.Immutable
 
 		public StringFormatKind StringFormat {
 			get { return StringFormatKind.AutoChar; }
+		}
+
+		public override string ToString()
+		{
+			return TypeHelper.GetTypeName(this);
 		}
 
 		public virtual PrimitiveTypeCode TypeCode {

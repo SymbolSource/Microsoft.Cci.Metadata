@@ -14,6 +14,8 @@ using System.Text;
 
 namespace Microsoft.Cci
 {
+	using Microsoft.Cci.ILGeneratorImplementation;
+
 	/// <summary>
 	/// Generates Microsoft intermediate language (MSIL) instructions.
 	/// </summary>
@@ -937,87 +939,6 @@ namespace Microsoft.Cci
 
 	}
 
-	public class TryBody
-	{
-
-		public TryBody(ILGeneratorLabel start)
-		{
-			this.start = start;
-		}
-
-		public readonly ILGeneratorLabel start;
-		public ILGeneratorLabel 		/*?*/end;
-	}
-
-	public class ExceptionHandler : IOperationExceptionInformation
-	{
-
-		public ExceptionHandler()
-		{
-		}
-
-		public ExceptionHandler(HandlerKind kind, TryBody tryBlock, ILGeneratorLabel handlerStart)
-		{
-			this.ExceptionType = Dummy.TypeReference;
-			this.Kind = kind;
-			this.HandlerStart = handlerStart;
-			this.tryBlock = tryBlock;
-		}
-
-		public HandlerKind Kind;
-		public ITypeReference ExceptionType;
-		public ILGeneratorLabel 		/*?*/TryStart;
-		public ILGeneratorLabel 		/*?*/TryEnd;
-		public ILGeneratorLabel HandlerEnd;
-		public ILGeneratorLabel HandlerStart;
-		public ILGeneratorLabel 		/*?*/FilterDecisionStart;
-		TryBody 		/*?*/tryBlock;
-
-		#region IOperationExceptionInformation Members
-
-		HandlerKind IOperationExceptionInformation.HandlerKind {
-			get { return this.Kind; }
-		}
-
-		ITypeReference IOperationExceptionInformation.ExceptionType {
-			get { return this.ExceptionType; }
-		}
-
-		uint IOperationExceptionInformation.TryStartOffset {
-			get {
-				if (this.TryStart != null)
-					return this.TryStart.Offset;
-				return this.tryBlock.start.Offset;
-			}
-		}
-
-		uint IOperationExceptionInformation.TryEndOffset {
-			get {
-				if (this.TryEnd != null)
-					return this.TryEnd.Offset;
-				return this.tryBlock.end.Offset;
-			}
-		}
-
-		uint IOperationExceptionInformation.FilterDecisionStartOffset {
-			get {
-				if (this.FilterDecisionStart == null)
-					return 0;
-				return this.FilterDecisionStart.Offset;
-			}
-		}
-
-		uint IOperationExceptionInformation.HandlerStartOffset {
-			get { return this.HandlerStart.Offset; }
-		}
-
-		uint IOperationExceptionInformation.HandlerEndOffset {
-			get { return this.HandlerEnd.Offset; }
-		}
-
-		#endregion
-	}
-
 	/// <summary>
 	/// An object that is used to mark a location in an IL stream and that is used to indicate where branches go to.
 	/// </summary>
@@ -1197,7 +1118,6 @@ namespace Microsoft.Cci
 		#endregion
 	}
 
-
 	/// <summary>
 	/// An object that keeps track of a set of local definitions (variables) and used (imported) namespaces that appear in the
 	/// source code corresponding to the IL operations from Offset to Offset+Length.
@@ -1282,6 +1202,91 @@ namespace Microsoft.Cci
 					yield return new UsedNamespace(this.nameTable.GetNameFor(usedNamespaceName));
 			}
 		}
+	}
+
+}
+
+namespace Microsoft.Cci.ILGeneratorImplementation
+{
+	public class TryBody
+	{
+
+		public TryBody(ILGeneratorLabel start)
+		{
+			this.start = start;
+		}
+
+		public readonly ILGeneratorLabel start;
+		public ILGeneratorLabel 		/*?*/end;
+	}
+
+	public class ExceptionHandler : IOperationExceptionInformation
+	{
+
+		public ExceptionHandler()
+		{
+		}
+
+		public ExceptionHandler(HandlerKind kind, TryBody tryBlock, ILGeneratorLabel handlerStart)
+		{
+			this.ExceptionType = Dummy.TypeReference;
+			this.Kind = kind;
+			this.HandlerStart = handlerStart;
+			this.tryBlock = tryBlock;
+		}
+
+		public HandlerKind Kind;
+		public ITypeReference ExceptionType;
+		public ILGeneratorLabel 		/*?*/TryStart;
+		public ILGeneratorLabel 		/*?*/TryEnd;
+		public ILGeneratorLabel HandlerEnd;
+		public ILGeneratorLabel HandlerStart;
+		public ILGeneratorLabel 		/*?*/FilterDecisionStart;
+		TryBody 		/*?*/tryBlock;
+
+		#region IOperationExceptionInformation Members
+
+		HandlerKind IOperationExceptionInformation.HandlerKind {
+			get { return this.Kind; }
+		}
+
+		ITypeReference IOperationExceptionInformation.ExceptionType {
+			get { return this.ExceptionType; }
+		}
+
+		uint IOperationExceptionInformation.TryStartOffset {
+			get {
+				if (this.TryStart != null)
+					return this.TryStart.Offset;
+				return this.tryBlock.start.Offset;
+			}
+		}
+
+		uint IOperationExceptionInformation.TryEndOffset {
+			get {
+				if (this.TryEnd != null)
+					return this.TryEnd.Offset;
+				return this.tryBlock.end.Offset;
+			}
+		}
+
+		uint IOperationExceptionInformation.FilterDecisionStartOffset {
+			get {
+				if (this.FilterDecisionStart == null)
+					return 0;
+				return this.FilterDecisionStart.Offset;
+			}
+		}
+
+		uint IOperationExceptionInformation.HandlerStartOffset {
+			get { return this.HandlerStart.Offset; }
+		}
+
+		uint IOperationExceptionInformation.HandlerEndOffset {
+			get { return this.HandlerEnd.Offset; }
+		}
+
+		#endregion
 	}
 
 	public class Operation : IOperation

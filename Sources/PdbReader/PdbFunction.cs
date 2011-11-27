@@ -20,7 +20,7 @@ namespace Microsoft.Cci.Pdb
 		0x60);
 		public static readonly IComparer byAddress = new PdbFunctionsByAddress();
 		public static readonly IComparer byAddressAndToken = new PdbFunctionsByAddressAndToken();
-		//internal static readonly IComparer byToken = new PdbFunctionsByToken();
+		//static internal readonly IComparer byToken = new PdbFunctionsByToken();
 
 		public uint token;
 		public uint slotToken;

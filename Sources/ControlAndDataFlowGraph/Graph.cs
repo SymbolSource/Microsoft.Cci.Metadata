@@ -1,11 +1,22 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright (c) Microsoft. All rights reserved.
+// This code is licensed under the Microsoft Public License.
+// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+//-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using Microsoft.Cci.UtilityDataStructures;
 using System.Text;
+using Microsoft.Cci.UtilityDataStructures;
 
 namespace Microsoft.Cci
 {
+	using Microsoft.Cci.ControlAndDataFlowGraph;
 
 	/// <summary>
 	/// A set of basic blocks, each of which has a list of successor blocks and some other information.
@@ -294,6 +305,10 @@ namespace Microsoft.Cci
 
 	}
 
+}
+
+namespace Microsoft.Cci.ControlAndDataFlowGraph
+{
 	public class Stack<Instruction> where Instruction : class
 	{
 
@@ -364,5 +379,4 @@ namespace Microsoft.Cci
 			get { return this.top; }
 		}
 	}
-
 }

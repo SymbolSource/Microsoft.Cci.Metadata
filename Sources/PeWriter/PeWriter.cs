@@ -10,24 +10,24 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.Cci;
 using System.Configuration.Assemblies;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Text;
 using Microsoft.Cci.UtilityDataStructures;
-using Microsoft.Cci.WriterUtilities;
 
 //^ using Microsoft.Contracts;
 
 namespace Microsoft.Cci
 {
+	using Microsoft.Cci.PeWriterInternal;
+	using Microsoft.Cci.WriterUtilities;
 
-	public class PeWriter
+	public class PeWriter : ITokenProvider
 	{
 
 		//^ [NotDelayed]
-			/*?*/			/*?*/			/*?*/		public PeWriter(IModule module, IMetadataHost host, System.IO.Stream peStream, ISourceLocationProvider sourceLocationProvider		, ILocalScopeProvider localScopeProvider		, IPdbWriter pdbWriter		)
+			/*?*/			/*?*/			/*?*/			/*?*/		public PeWriter(IModule module, IMetadataHost host, System.IO.Stream peStream, ISourceLocationProvider sourceLocationProvider		, ILocalScopeProvider localScopeProvider		, IPdbWriter pdbWriter		, params CustomSectionProvider[] customSectionProviders		)
 		{
 			this.module = module;
 			this.host = host;
@@ -36,9 +36,7 @@ namespace Microsoft.Cci
 			this.sourceLocationProvider = sourceLocationProvider;
 			this.localScopeProvider = localScopeProvider;
 			this.pdbWriter = pdbWriter;
-			//^ this.memberRefStructuralIndex = new Dictionary<ITypeMemberReference, uint>();
-			//^ this.methodSpecStructuralIndex = new Dictionary<IGenericMethodInstanceReference, uint>();
-			//^ base();
+			this.customSectionProviders = customSectionProviders;
 			this.memberRefStructuralIndex = new Dictionary<ITypeMemberReference, uint>(new MemberRefComparer(this));
 			this.methodSpecStructuralIndex = new Dictionary<IGenericMethodInstanceReference, uint>(new MethodSpecComparer(this));
 			this.typeSpecStructuralIndex = new Dictionary<ITypeReference, uint>(new TypeSpecComparer(this));
@@ -57,6 +55,7 @@ namespace Microsoft.Cci
 		BinaryWriter coverageDataWriter = new BinaryWriter(new MemoryStream());
 		SectionHeader coverSection = new SectionHeader();
 		HashtableForUintValues<ICustomAttribute> customAtributeSignatureIndex = new HashtableForUintValues<ICustomAttribute>();
+		CustomSectionProvider[] 		/*?*/customSectionProviders;
 		PeDebugDirectory 		/*?*/debugDirectory;
 		bool emitRuntimeStartupStub;
 		List<IEventDefinition> eventDefList = new List<IEventDefinition>();
@@ -69,6 +68,8 @@ namespace Microsoft.Cci
 		HashtableForUintValues<IFieldReference> fieldSignatureIndex = new HashtableForUintValues<IFieldReference>();
 		Hashtable fileRefIndex = new Hashtable();
 		List<IFileReference> fileRefList = new List<IFileReference>();
+		uint offsetToMethodDefTable;
+		uint offsetToFieldRvaTable;
 		List<IGenericParameter> genericParameterList = new List<IGenericParameter>();
 		MemoryStream headerStream = new MemoryStream(1024);
 		IMetadataHost host;
@@ -105,7 +106,8 @@ namespace Microsoft.Cci
 		BinaryWriter sdataWriter = new BinaryWriter(new MemoryStream());
 		SectionHeader rdataSection = new SectionHeader();
 		SectionHeader sdataSection = new SectionHeader();
-		SectionHeader[] uninterpretedSections;
+		SectionHeader[] customSectionHeaders;
+		SectionHeader[] uninterpretedSectionHeaders;
 		HashtableForUintValues<ISignature> signatureIndex = new HashtableForUintValues<ISignature>();
 		Hashtable signatureStructuralIndex = new Hashtable();
 		uint sizeOfImportAddressTable;
@@ -293,13 +295,11 @@ namespace Microsoft.Cci
 
 		/// <summary>
 		/// Fills in stringIndexMap with data from stringIndex and write to stringWriter.  
-		/// Releases stringIndex as the stringTable is sealed after this point.
 		/// </summary>
 		public void FoldStrings()
 		{
 			// Sort by suffix and remove stringIndex
 			SortedList<string, uint> sorted = new SortedList<string, uint>(this.stringIndex, new SuffixSort());
-			this.stringIndex = null;
 
 			// Create VirtIdx to Idx map and add entry for empty string
 			this.stringIndexMap = new Hashtable((uint)sorted.Count);
@@ -348,21 +348,22 @@ namespace Microsoft.Cci
 			WritePeToStream(module, host, stream, null, null, null);
 		}
 
-			/*?*/			/*?*/			/*?*/		public static void WritePeToStream(IModule module, IMetadataHost host, System.IO.Stream stream, ISourceLocationProvider sourceLocationProvider		, ILocalScopeProvider localScopeProvider		, IPdbWriter pdbWriter		)
+			/*?*/			/*?*/			/*?*/		public static void WritePeToStream(IModule module, IMetadataHost host, System.IO.Stream stream, ISourceLocationProvider sourceLocationProvider		, ILocalScopeProvider localScopeProvider		, IPdbWriter pdbWriter		, params CustomSectionProvider[] customSectionProviders)
 		{
-			PeWriter writer = new PeWriter(module, host, stream, sourceLocationProvider, localScopeProvider, pdbWriter);
+			PeWriter writer = new PeWriter(module, host, stream, sourceLocationProvider, localScopeProvider, pdbWriter, customSectionProviders);
 			#if !COMPACTFX
 			IUnmanagedPdbWriter 			/*?*/unmangedPdbWriter = pdbWriter as IUnmanagedPdbWriter;
 			if (unmangedPdbWriter != null)
 				unmangedPdbWriter.SetMetadataEmitter(new MetadataWrapper(writer));
 			#endif
+			writer.ntHeader.TimeDateStamp = (uint)((DateTime.Now.ToUniversalTime() - NineteenSeventy).TotalSeconds);
 
 			//Extract information from object model into tables, indices and streams
 			writer.CreateIndices();
 			writer.SerializeMethodBodies();
 			writer.PopulateTableRows();
 			writer.FoldStrings();
-			//Do this as soon as table rows are done and before we need to final size of string table
+			//Do this as soon as table rows are done and before we need the final size of string table
 			writer.FillInSectionHeaders();
 			//Do this here so that tables and win32 resources can contain actual RVAs without the need for fixups.
 			writer.SerializeMetadata();
@@ -380,6 +381,7 @@ namespace Microsoft.Cci
 			writer.WriteTlsSection();
 			writer.WriteResourceSection();
 			writer.WriteRelocSection();
+			writer.WriteCustomSections();
 			writer.WriteUninterpretedSections();
 
 			if (pdbWriter != null) {
@@ -401,7 +403,23 @@ namespace Microsoft.Cci
 			IAssembly 			/*?*/assembly = this.module as IAssembly;
 			if (assembly == null)
 				return 0;
-			uint keySize = IteratorHelper.EnumerableCount(assembly.PublicKey);
+			uint keySize = 0;
+			foreach (var attribute in assembly.AssemblyAttributes) {
+				if (TypeHelper.TypesAreEquivalent(attribute.Type, this.host.PlatformType.SystemReflectionAssemblySignatureKeyAttribute)) {
+					foreach (var arg in attribute.Arguments) {
+						var mconst = arg as IMetadataConstant;
+						if (mconst != null) {
+							var str = mconst.Value as string;
+							if (str != null)
+								keySize = (uint)str.Length / 2;
+						}
+						break;
+					}
+					break;
+				}
+			}
+			if (keySize == 0)
+				keySize = IteratorHelper.EnumerableCount(assembly.PublicKey);
 			if (keySize == 0)
 				return 0;
 			return keySize < 128 + 32 ? 128u : keySize - 32;
@@ -523,9 +541,9 @@ namespace Microsoft.Cci
 			return result + 1;
 		}
 
-		public uint ComputeSizeOfPeHeaders()
+		public uint ComputeSizeOfPeHeaders(ushort numberOfSections)
 		{
-			ushort numberOfSections = 1;
+			numberOfSections++;
 			//.text
 			if (this.emitRuntimeStartupStub)
 				numberOfSections++;
@@ -586,8 +604,14 @@ namespace Microsoft.Cci
 			this.CreateInitialAssemblyRefIndex();
 			this.CreateInitialFileRefIndex();
 			this.CreateInitialExportedTypeIndex();
+			this.CreateInitialTypeRefIndex();
+			this.CreateInitialMemberRefIndex();
+			if (this.pdbWriter != null)
+				this.pdbWriter.OpenTokenSourceLocationsScope();
 			foreach (INamedTypeDefinition typeDef in this.module.GetAllTypes())
 				this.CreateIndicesFor(typeDef);
+			if (this.pdbWriter != null)
+				this.pdbWriter.CloseTokenSourceLocationsScope();
 			//Only the second pass is necessary. The first helps to make type reference tokens be more like C#.
 			new ReferenceIndexer(this, false).Traverse(this.module);
 			new ReferenceIndexer(this, true).Traverse(this.module);
@@ -620,19 +644,42 @@ namespace Microsoft.Cci
 				}
 			}
 			this.typeDefList.Add(typeDef);
+			if (this.pdbWriter != null && this.sourceLocationProvider != null) {
+				foreach (var location in this.sourceLocationProvider.GetPrimarySourceLocationsFor(typeDef.Locations))
+					this.pdbWriter.DefineTokenSourceLocation(0x2000000 | (uint)this.typeDefList.Count, location);
+			}
 			this.typeDefIndex.Add(typeDef.InternedKey, (uint)this.typeDefList.Count);
 			foreach (IMethodImplementation methodImplementation in typeDef.ExplicitImplementationOverrides)
 				this.methodImplList.Add(methodImplementation);
-			foreach (IEventDefinition eventDef in typeDef.Events)
+			foreach (IEventDefinition eventDef in typeDef.Events) {
 				this.eventDefList.Add(eventDef);
+				if (this.pdbWriter != null && this.sourceLocationProvider != null) {
+					foreach (var location in this.sourceLocationProvider.GetPrimarySourceLocationsFor(eventDef.Locations))
+						this.pdbWriter.DefineTokenSourceLocation(0x14000000 | (uint)this.eventDefList.Count, location);
+				}
+			}
 			foreach (IFieldDefinition fieldDef in typeDef.Fields) {
 				this.fieldDefList.Add(fieldDef);
+				if (this.pdbWriter != null && this.sourceLocationProvider != null) {
+					foreach (var location in this.sourceLocationProvider.GetPrimarySourceLocationsFor(fieldDef.Locations))
+						this.pdbWriter.DefineTokenSourceLocation(0x4000000 | (uint)this.fieldDefList.Count, location);
+				}
 				this.fieldDefIndex.Add(fieldDef.InternedKey, (uint)this.fieldDefList.Count);
 			}
-			foreach (IMethodDefinition methodDef in typeDef.Methods)
+			foreach (IMethodDefinition methodDef in typeDef.Methods) {
 				this.CreateIndicesFor(methodDef);
-			foreach (IPropertyDefinition propertyDef in typeDef.Properties)
+				if (this.pdbWriter != null && this.sourceLocationProvider != null) {
+					foreach (var location in this.sourceLocationProvider.GetPrimarySourceLocationsFor(methodDef.Locations))
+						this.pdbWriter.DefineTokenSourceLocation(0x6000000 | (uint)this.methodDefList.Count, location);
+				}
+			}
+			foreach (IPropertyDefinition propertyDef in typeDef.Properties) {
 				this.propertyDefList.Add(propertyDef);
+				if (this.pdbWriter != null && this.sourceLocationProvider != null) {
+					foreach (var location in this.sourceLocationProvider.GetPrimarySourceLocationsFor(propertyDef.Locations))
+						this.pdbWriter.DefineTokenSourceLocation(0x17000000 | (uint)this.propertyDefList.Count, location);
+				}
+			}
 			foreach (IMethodDefinition methodDef in typeDef.Methods) {
 				if (!methodDef.IsAbstract && !methodDef.IsExternal) {
 					//Evaluate the PrivateHelperTypes property for its side effect. See comment on typeDef.PrivateHelperMembers.
@@ -779,6 +826,22 @@ namespace Microsoft.Cci
 			}
 		}
 
+		public void CreateInitialTypeRefIndex()
+		{
+			Debug.Assert(!this.tableIndicesAreComplete);
+			foreach (var typeRef in this.module.GetTypeReferences()) {
+				this.GetTypeRefIndex(typeRef);
+			}
+		}
+
+		public void CreateInitialMemberRefIndex()
+		{
+			Debug.Assert(!this.tableIndicesAreComplete);
+			foreach (var memberRef in this.module.GetTypeMemberReferences()) {
+				this.GetMemberRefIndex(memberRef);
+			}
+		}
+
 		public void FillInClrHeader()
 		{
 			ClrHeader clrHeader = this.clrHeader;
@@ -805,6 +868,11 @@ namespace Microsoft.Cci
 
 		public void FillInNtHeader()
 		{
+			ushort numberOfSections = 0;
+			if (this.customSectionHeaders != null)
+				numberOfSections = (ushort)this.customSectionHeaders.Length;
+			if (this.uninterpretedSectionHeaders != null)
+				numberOfSections += (ushort)this.uninterpretedSectionHeaders.Length;
 			bool use32bitAddresses = !this.module.Requires64bits;
 			NtHeader ntHeader = this.ntHeader;
 			ntHeader.AddressOfEntryPoint = this.emitRuntimeStartupStub ? this.textDataSection.RelativeVirtualAddress - (use32bitAddresses ? 6u : 10u) : 0;
@@ -813,10 +881,9 @@ namespace Microsoft.Cci
 			ntHeader.PointerToSymbolTable = 0;
 			ntHeader.SizeOfCode = this.textSection.SizeOfRawData;
 			ntHeader.SizeOfInitializedData = this.rdataSection.SizeOfRawData + this.coverSection.SizeOfRawData + this.sdataSection.SizeOfRawData + this.tlsSection.SizeOfRawData + this.resourceSection.SizeOfRawData + this.relocSection.SizeOfRawData;
-			ntHeader.SizeOfHeaders = Aligned(this.ComputeSizeOfPeHeaders(), this.module.FileAlignment);
+			ntHeader.SizeOfHeaders = Aligned(this.ComputeSizeOfPeHeaders(numberOfSections), this.module.FileAlignment);
 			ntHeader.SizeOfImage = Aligned(this.relocSection.RelativeVirtualAddress + this.relocSection.VirtualSize, 0x2000);
 			ntHeader.SizeOfUninitializedData = 0;
-			ntHeader.TimeDateStamp = (uint)((DateTime.Now.ToUniversalTime() - NineteenSeventy).TotalSeconds);
 
 			ntHeader.ImportAddressTable.RelativeVirtualAddress = this.textSection.RelativeVirtualAddress;
 			ntHeader.ImportAddressTable.Size = this.sizeOfImportAddressTable;
@@ -862,7 +929,28 @@ namespace Microsoft.Cci
 
 		public void FillInSectionHeaders()
 		{
-			uint sizeOfPeHeaders = this.ComputeSizeOfPeHeaders();
+			ushort nonStandardSections = 0;
+			List<IPESection> customSections = null;
+			if (this.module is IAssembly && this.customSectionProviders != null) {
+				PEFileData peFileData = this.GetPEFileData();
+				var n = this.customSectionProviders.Length;
+				customSections = new List<IPESection>(n);
+				for (int i = 0; i < n; i++) {
+					customSections.Add(this.customSectionProviders[i](peFileData, this));
+					nonStandardSections++;
+				}
+			}
+			List<IPESection> uninterpretedSections = null;
+			foreach (var peSection in this.module.UninterpretedSections) {
+				if (customSections != null && customSections.Find(uiSection => uiSection.SectionName == peSection.SectionName) != null)
+					continue;
+				if (uninterpretedSections == null)
+					uninterpretedSections = new List<IPESection>();
+				uninterpretedSections.Add(peSection);
+				nonStandardSections++;
+			}
+
+			uint sizeOfPeHeaders = this.ComputeSizeOfPeHeaders(nonStandardSections);
 			uint sizeOfTextSection = this.ComputeSizeOfTextSection();
 
 			this.textSection.Characteristics = 0x60000020;
@@ -963,28 +1051,72 @@ namespace Microsoft.Cci
 
 			uint pointerToRawData = this.relocSection.PointerToRawData + this.relocSection.SizeOfRawData;
 			uint rva = Aligned(this.relocSection.RelativeVirtualAddress + this.relocSection.VirtualSize, 0x2000);
-			List<SectionHeader> uninterpretedSections = null;
-			foreach (var peSection in this.module.UninterpretedSections) {
-				if (uninterpretedSections == null)
-					uninterpretedSections = new List<SectionHeader>();
-				uninterpretedSections.Add(new SectionHeader {
-					Name = peSection.SectionName.Value,
-					Characteristics = (uint)peSection.Characteristics,
-					NumberOfLinenumbers = 0,
-					NumberOfRelocations = 0,
-					PointerToLinenumbers = 0,
-					PointerToRawData = pointerToRawData,
-					PointerToRelocations = 0,
-					RawData = peSection.Rawdata,
-					RelativeVirtualAddress = rva,
-					SizeOfRawData = (uint)peSection.SizeOfRawData,
-					VirtualSize = (uint)peSection.VirtualSize
-				});
-				pointerToRawData += (uint)peSection.SizeOfRawData;
-				rva = Aligned(rva + (uint)peSection.VirtualSize, 0x2000);
+
+			if (customSections != null) {
+				var n = customSections.Count;
+				this.customSectionHeaders = new SectionHeader[n];
+				for (int i = 0; i < n; i++) {
+					var peSection = customSections[i];
+					this.customSectionHeaders[i] = new SectionHeader {
+						Name = peSection.SectionName.Value,
+						Characteristics = (uint)peSection.Characteristics,
+						NumberOfLinenumbers = 0,
+						NumberOfRelocations = 0,
+						PointerToLinenumbers = 0,
+						PointerToRawData = pointerToRawData,
+						PointerToRelocations = 0,
+						RawData = peSection.Rawdata,
+						RelativeVirtualAddress = rva,
+						SizeOfRawData = (uint)peSection.SizeOfRawData,
+						VirtualSize = (uint)peSection.VirtualSize
+					};
+					pointerToRawData += (uint)peSection.SizeOfRawData;
+					rva = Aligned(rva + (uint)peSection.VirtualSize, 0x2000);
+				}
 			}
-			if (uninterpretedSections != null)
-				this.uninterpretedSections = uninterpretedSections.ToArray();
+
+			if (uninterpretedSections != null) {
+				var n = uninterpretedSections.Count;
+				this.uninterpretedSectionHeaders = new SectionHeader[n];
+				for (int i = 0; i < n; i++) {
+					var peSection = uninterpretedSections[i];
+					this.uninterpretedSectionHeaders[i] = new SectionHeader {
+						Name = peSection.SectionName.Value,
+						Characteristics = (uint)peSection.Characteristics,
+						NumberOfLinenumbers = 0,
+						NumberOfRelocations = 0,
+						PointerToLinenumbers = 0,
+						PointerToRawData = pointerToRawData,
+						PointerToRelocations = 0,
+						RawData = peSection.Rawdata,
+						RelativeVirtualAddress = rva,
+						SizeOfRawData = (uint)peSection.SizeOfRawData,
+						VirtualSize = (uint)peSection.VirtualSize
+					};
+					pointerToRawData += (uint)peSection.SizeOfRawData;
+					rva = Aligned(rva + (uint)peSection.VirtualSize, 0x2000);
+				}
+			}
+		}
+
+		public PEFileData GetPEFileData()
+		{
+			IAssembly assembly = (IAssembly)this.module;
+			return new PEFileData {
+				//extMemberRefExtendCount = (uint)this.memberRefTable.Count+1,
+				//extTypeRefExtendCount = (uint)this.typeRefTable.Count+1,
+				fieldRvaCount = (uint)this.fieldRvaTable.Count,
+				fieldRvaRecordSize = 4u + this.fieldDefIndexSize,
+				offsetToFieldRvaTable = this.offsetToFieldRvaTable,
+				offsetToMethodDefTable = this.offsetToMethodDefTable,
+				ilImageSize = this.ntHeader.SizeOfImage,
+				methodDefRecordSize = 8u + this.stringIndexSize + this.blobIndexSize + this.parameterIndexSize,
+				methodDefCount = (uint)this.methodTable.Count,
+				targetProcessorArchitecture = 0,
+				timeStamp = this.ntHeader.TimeDateStamp,
+				wellKnownTypes = null
+				//TODO: an array of tokens for the system types defined in this.module (when this.module is mscorlib)
+			};
 		}
 
 		public uint GetAssemblyRefIndex(IAssemblyReference assemblyReference)
@@ -1504,7 +1636,7 @@ namespace Microsoft.Cci
 
 		public uint GetMethodRefTokenFor(IArrayTypeReference arrayTypeReference, OperationCode operationCode)
 		{
-			return 0xa000000 | this.GetMemberRefIndex(new DummyArrayMethodReference(arrayTypeReference, operationCode, this.host.NameTable, this.module.PlatformType));
+			return 0xa000000 | this.GetMemberRefIndex(new Microsoft.Cci.Immutable.DummyArrayMethodReference(arrayTypeReference, operationCode, this.host));
 		}
 
 		public static ushort GetParameterIndex(IParameterDefinition parameterDefinition)
@@ -2131,6 +2263,8 @@ namespace Microsoft.Cci
 			this.blobWriter.Align(4);
 			BinaryWriter writer = new BinaryWriter(this.metadataStream);
 			this.SerializeGeneralMetadataHeader(writer);
+			this.offsetToFieldRvaTable += writer.BaseStream.Position;
+			this.offsetToMethodDefTable += writer.BaseStream.Position;
 			this.tableStream.WriteTo(this.metadataStream);
 			this.stringWriter.BaseStream.WriteTo(this.metadataStream);
 			this.userStringWriter.BaseStream.WriteTo(this.metadataStream);
@@ -3527,6 +3661,7 @@ namespace Microsoft.Cci
 
 		public void SerializeMethodTable(BinaryWriter writer)
 		{
+			this.offsetToMethodDefTable = writer.BaseStream.Position;
 			foreach (MethodRow method in this.methodTable) {
 				if (method.Rva == uint.MaxValue)
 					writer.WriteUint(0);
@@ -3704,6 +3839,7 @@ namespace Microsoft.Cci
 
 		public void SerializeFieldRvaTable(BinaryWriter writer)
 		{
+			this.offsetToFieldRvaTable = writer.BaseStream.Position;
 			foreach (FieldRvaRow fieldRva in this.fieldRvaTable) {
 				writer.WriteUint(GetRva(this.GetSection(fieldRva.SectionKind), fieldRva.Offset));
 				SerializeIndex(writer, fieldRva.Field, this.fieldDefIndexSize);
@@ -3716,6 +3852,7 @@ namespace Microsoft.Cci
 			if (assembly == null)
 				return;
 			writer.WriteUint((uint)AssemblyHashAlgorithm.SHA1);
+			//TODO: introduce new enum so that we can have SHA256 etc. Make this part of the object model.
 			writer.WriteUshort((ushort)assembly.Version.Major);
 			writer.WriteUshort((ushort)assembly.Version.Minor);
 			writer.WriteUshort((ushort)assembly.Version.Build);
@@ -4545,13 +4682,13 @@ namespace Microsoft.Cci
 			writer.WriteString(this.GetSerializedTypeName(typeReference, ref isAssemblyQualified), false);
 		}
 
-		public string GetSerializedTypeName(ITypeReference typeReference)
+		public string GetSerializedTypeName(ITypeReference typeReference, bool omitTypeArguments = false)
 		{
 			bool isAssemblyQualified = false;
-			return this.GetSerializedTypeName(typeReference, ref isAssemblyQualified);
+			return this.GetSerializedTypeName(typeReference, ref isAssemblyQualified, omitTypeArguments);
 		}
 
-		public string GetSerializedTypeName(ITypeReference typeReference, ref bool isAssemblyQualified)
+		public string GetSerializedTypeName(ITypeReference typeReference, ref bool isAssemblyQualified, bool omitTypeArguments = false)
 		{
 			StringBuilder sb = new StringBuilder();
 			IArrayTypeReference 			/*?*/arrType = typeReference as IArrayTypeReference;
@@ -4598,24 +4735,34 @@ namespace Microsoft.Cci
 			}
 			INestedTypeReference 			/*?*/neType = typeReference as INestedTypeReference;
 			if (neType != null) {
-				sb.Append(this.GetSerializedTypeName(neType.ContainingType));
+				var sneType = neType as ISpecializedNestedTypeReference;
+				if (sneType != null)
+					sb.Append(this.GetSerializedTypeName(sneType.UnspecializedVersion.ContainingType, omitTypeArguments: true));
+				else
+					sb.Append(this.GetSerializedTypeName(neType.ContainingType));
 				sb.Append('+');
 				sb.Append(GetMangledAndEscapedName(neType));
+				if (!omitTypeArguments && sneType != null) {
+					while (true) {
+						var csneType = sneType.ContainingType as ISpecializedNestedTypeReference;
+						if (csneType != null) {
+							sneType = csneType;
+							continue;
+						}
+						var genInst = (IGenericTypeInstanceReference)sneType.ContainingType;
+						sb.Append('[');
+						this.AppendSerializedTypeArguments(sb, genInst);
+						sb.Append(']');
+						break;
+					}
+				}
 				goto done;
 			}
 			IGenericTypeInstanceReference 			/*?*/instance = typeReference as IGenericTypeInstanceReference;
 			if (instance != null) {
-				sb.Append(this.GetSerializedTypeName(instance.GenericType));
+				sb.Append(this.GetSerializedTypeName(instance.GenericType, omitTypeArguments: true));
 				sb.Append('[');
-				bool first = true;
-				foreach (ITypeReference argument in instance.GenericArguments) {
-					if (first)
-						first = false;
-					else
-						sb.Append(',');
-					bool isAssemQual = true;
-					this.AppendSerializedTypeName(sb, argument, ref isAssemQual);
-				}
+				this.AppendSerializedTypeArguments(sb, instance);
 				sb.Append(']');
 				goto done;
 			}
@@ -4624,6 +4771,31 @@ namespace Microsoft.Cci
 			if (isAssemblyQualified)
 				this.AppendAssemblyQualifierIfNecessary(sb, typeReference, out isAssemblyQualified);
 			return sb.ToString();
+		}
+
+		public void AppendSerializedTypeArguments(StringBuilder sb, IGenericTypeInstanceReference instance)
+		{
+			ITypeReference template = instance.GenericType;
+			while (true) {
+				var specializedTemplate = template as ISpecializedNestedTypeReference;
+				if (specializedTemplate == null)
+					break;
+				template = specializedTemplate.ContainingType;
+			}
+			var templateInst = template as IGenericTypeInstanceReference;
+			bool first = true;
+			if (templateInst != null) {
+				this.AppendSerializedTypeArguments(sb, templateInst);
+				first = false;
+			}
+			foreach (ITypeReference argument in instance.GenericArguments) {
+				if (first)
+					first = false;
+				else
+					sb.Append(',');
+				bool isAssemQual = true;
+				this.AppendSerializedTypeName(sb, argument, ref isAssemQual);
+			}
 		}
 
 		public void AppendAssemblyQualifierIfNecessary(StringBuilder sb, ITypeReference typeReference, out bool isAssemQualified)
@@ -4842,7 +5014,7 @@ namespace Microsoft.Cci
 				writer.WriteByte(0x1e);
 				writer.WriteCompressedUInt(genericMethodParameterReference.Index);
 				return;
-			} else if (IsTypeSpecification(typeReference)) {
+			} else if (IsTypeSpecification(typeReference) && !noTokens) {
 				ITypeReference uninstantiatedTypeReference = GetUninstantiatedGenericType(typeReference);
 				if (uninstantiatedTypeReference == typeReference) {
 					//TODO: error
@@ -5270,6 +5442,15 @@ namespace Microsoft.Cci
 			WriteSectionHeader(this.relocSection, writer);
 			WriteSectionHeader(this.tlsSection, writer);
 
+			if (this.customSectionHeaders != null) {
+				foreach (var sectionHeader in this.customSectionHeaders)
+					WriteSectionHeader(sectionHeader, writer);
+			}
+			if (this.uninterpretedSectionHeaders != null) {
+				foreach (var sectionHeader in this.uninterpretedSectionHeaders)
+					WriteSectionHeader(sectionHeader, writer);
+			}
+
 			writer.BaseStream.WriteTo(this.peStream);
 			this.headerStream = this.emptyStream;
 
@@ -5608,18 +5789,179 @@ namespace Microsoft.Cci
 			this.tlsDataWriter.BaseStream.WriteTo(this.peStream);
 		}
 
+		public void WriteCustomSections()
+		{
+			if (this.customSectionHeaders == null)
+				return;
+			foreach (var customSection in this.customSectionHeaders) {
+				this.peStream.Position = customSection.PointerToRawData;
+				foreach (var b in customSection.RawData)
+					this.peStream.WriteByte(b);
+			}
+		}
+
 		public void WriteUninterpretedSections()
 		{
-			if (this.uninterpretedSections == null)
+			if (this.uninterpretedSectionHeaders == null)
 				return;
-			foreach (var uninterpretedSection in this.uninterpretedSections) {
+			foreach (var uninterpretedSection in this.uninterpretedSectionHeaders) {
 				this.peStream.Position = uninterpretedSection.PointerToRawData;
 				foreach (var b in uninterpretedSection.RawData)
 					this.peStream.WriteByte(b);
 			}
 		}
 
+
+		#region ITokenProvider Members
+
+		public uint GetTokenFor(ITypeReference typeReference)
+		{
+			return this.GetTypeToken(typeReference);
+		}
+
+		public uint GetTokenFor(IFieldReference field)
+		{
+			return this.GetFieldToken(field);
+		}
+
+		public uint GetTokenFor(IMethodReference method)
+		{
+			return this.GetMethodToken(method);
+		}
+
+		public uint GetTokenFor(string str)
+		{
+			return this.GetUserStringToken(str);
+		}
+
+		#endregion
 	}
+
+	/// <summary>
+	/// Called by the PEWriter to allow a plug-in to provide a custom section that will be stored in the PE file along
+	/// with the sections that contain serialized metadata.
+	/// </summary>
+	/// <param name="peFileData">A somewhat random collection of values that can be useful to know about a PE file, but which cannot be obtained from a metadata model.</param>
+	/// <param name="tokenProvider">A mapper from metadata objects to the tokens that will be used in the PE file being writtern.</param>
+	/// <returns>An IPESection objet that is to be serialized into the PE file being written out by PEWriter (which is calling this delegate).</returns>
+	public delegate IPESection CustomSectionProvider(PEFileData peFileData, ITokenProvider tokenProvider);
+
+	/// <summary>
+	/// A somewhat random collection of values that can be useful to know about a PE file, but which cannot be obtained from a metadata model.
+	/// These values can be persisted inside a custom section and help a reader of the custom section to quickly
+	/// find values in the standard sections of the PE file. They can also be used to verify that the custom section matches to the PE file.
+	/// </summary>
+	public sealed class PEFileData
+	{
+		/// <summary>
+		/// The time stamp that the PE writer will write into the PE file.
+		/// </summary>
+		public uint timeStamp;
+
+		/// <summary>
+		/// Type def tokens for the "well known" types. Only non null if the PE file contains the "core" .NET library which defines System.Object.
+		/// The types are: System.Object, System.String, System.ValueType, System.Enum, System.Array, System.Boolean, System.Void, System.Char, System.SByte
+		/// System.Byte, System.UInt16, System.Int32, System.UInt32, System.Int64, System.UInt64, System.Single, System.Double, System.IntPtr, System.UIntPtr,
+		/// System.MarshalByRefObject, System.MultiCastDelegate, System.Nullable, System.__Canon, System.Runtime.Remoting.Proxies.__TransparentProxy
+		/// System.__ComObject, System.ContextBoundObject.
+		/// </summary>
+		public uint[] 		/*?*/wellKnownTypes;
+
+		/// <summary>
+		/// The offset from the start of the metadata tables to the first row of the first MethodDef table.
+		/// </summary>
+		public uint offsetToMethodDefTable;
+
+		/// <summary>
+		/// The size of a row of the MethodDef table.
+		/// </summary>
+		public uint methodDefRecordSize;
+
+		/// <summary>
+		/// The number of rows in the MethodDef table.
+		/// </summary>
+		public uint methodDefCount;
+
+		/// <summary>
+		/// The offset from the start of the metadata tables, to the first row of the FieldRVA table.
+		/// </summary>
+		public uint offsetToFieldRvaTable;
+
+		/// <summary>
+		/// The size of a row of the FieldRVA table.
+		/// </summary>
+		public uint fieldRvaRecordSize;
+
+		/// <summary>
+		/// The number of rows in the FieldRVA table.
+		/// </summary>
+		public uint fieldRvaCount;
+
+		/// <summary>
+		/// The number of bytes in the PE image (as reported in the NT header).
+		/// </summary>
+		public uint ilImageSize;
+
+		/// <summary>
+		/// The particular processor architecture required by the assembly in the PE file being written. Architecture independent assemblies will report X86 as their architecture.
+		/// </summary>
+		public TargetProcessorArchitecture targetProcessorArchitecture;
+
+	}
+
+	/// <summary>
+	/// An enumeration of processor architectures.
+	/// </summary>
+	public enum TargetProcessorArchitecture
+	{
+		/// <summary>
+		/// Intel x86
+		/// </summary>
+		X86,
+		/// <summary>
+		/// AMD x64
+		/// </summary>
+		X64,
+		/// <summary>
+		/// Intel IA64
+		/// </summary>
+		IA64,
+		/// <summary>
+		/// ARM
+		/// </summary>
+		ARM
+	}
+
+	/// <summary>
+	/// Provides methods that map metadata references onto PE file tokens.
+	/// </summary>
+	public interface ITokenProvider
+	{
+		/// <summary>
+		/// Returns the metadata token value that is used instead of the given field reference when serializing metadata using the PE file format.
+		/// </summary>
+		uint GetTokenFor(IFieldReference field);
+
+		/// <summary>
+		/// Returns the metadata token value that is used instead of the given method reference when serializing metadata using the PE file format.
+		/// </summary>
+		uint GetTokenFor(IMethodReference method);
+
+		/// <summary>
+		/// Returns the metadata token value that is used instead of the given type reference when serializing metadata using the PE file format.
+		/// </summary>
+		uint GetTokenFor(ITypeReference typeReference);
+
+		/// <summary>
+		/// Returns the metadata token value that is used instead of the given string when serializing metadata using the PE file format.
+		/// </summary>
+		uint GetTokenFor(string str);
+	}
+
+}
+
+namespace Microsoft.Cci.PeWriterInternal
+{
 
 	public class ByteArrayComparer : IEqualityComparer<byte[]>
 	{
@@ -5684,183 +6026,6 @@ namespace Microsoft.Cci
 	{
 		public uint RelativeVirtualAddress;
 		public uint Size;
-	}
-
-	public class DummyArrayMethodReference : IMethodReference
-	{
-
-		IArrayTypeReference arrayType;
-		OperationCode arrayOperation;
-		IPlatformType platformType;
-
-		public DummyArrayMethodReference(IArrayTypeReference arrayType, OperationCode arrayOperation, INameTable nameTable, IPlatformType platformType)
-		{
-			this.arrayType = arrayType;
-			this.arrayOperation = arrayOperation;
-			this.platformType = platformType;
-			IName name = Dummy.Name;
-			switch (this.arrayOperation) {
-				case OperationCode.Array_Addr:
-					name = nameTable.Address;
-					break;
-				case OperationCode.Array_Create:
-				case OperationCode.Array_Create_WithLowerBound:
-					name = nameTable.Ctor;
-					break;
-				case OperationCode.Array_Get:
-					name = nameTable.Get;
-					break;
-				case OperationCode.Array_Set:
-					name = nameTable.Set;
-					break;
-			}
-			this.name = name;
-		}
-
-		public bool AcceptsExtraArguments {
-			get { return false; }
-		}
-
-		public ushort GenericParameterCount {
-			get { return 0; }
-		}
-
-		public bool IsGeneric {
-			get { return false; }
-		}
-
-		public bool IsStatic {
-			get { return false; }
-		}
-
-		public IMethodDefinition ResolvedMethod {
-			get { return Dummy.Method; }
-		}
-
-		public IEnumerable<IParameterTypeInformation> ExtraParameters {
-			get { return Enumerable<IParameterTypeInformation>.Empty; }
-		}
-
-		public CallingConvention CallingConvention {
-			get { return CallingConvention.HasThis; }
-		}
-
-		public void Dispatch(IMetadataVisitor visitor)
-		{
-		}
-
-		public void DispatchAsReference(IMetadataVisitor visitor)
-		{
-		}
-
-		public IEnumerable<IParameterTypeInformation> Parameters {
-			get {
-				ushort n = (ushort)this.arrayType.Rank;
-				if (this.arrayOperation == OperationCode.Array_Create_WithLowerBound)
-					n *= 2;
-				for (ushort i = 0; i < n; i++)
-					yield return new DummyArrayMethodParameter(this, i, this.platformType.SystemInt32);
-				if (this.arrayOperation == OperationCode.Array_Set)
-					yield return new DummyArrayMethodParameter(this, n, this.arrayType.ElementType);
-			}
-		}
-
-		public ushort ParameterCount {
-			get {
-				ushort n = (ushort)this.arrayType.Rank;
-				if (this.arrayOperation == OperationCode.Array_Create_WithLowerBound)
-					n *= 2;
-				if (this.arrayOperation == OperationCode.Array_Set)
-					n++;
-				return n;
-			}
-		}
-
-		public IEnumerable<ICustomModifier> ReturnValueCustomModifiers {
-			get { return Enumerable<ICustomModifier>.Empty; }
-		}
-
-		public bool ReturnValueIsByRef {
-			get { return this.arrayOperation == OperationCode.Array_Addr; }
-		}
-
-		public bool ReturnValueIsModified {
-			get { return false; }
-		}
-
-		public ITypeReference Type {
-			get {
-				if (this.arrayOperation == OperationCode.Array_Addr || this.arrayOperation == OperationCode.Array_Get)
-					return this.arrayType.ElementType;
-				else
-					return this.platformType.SystemVoid;
-			}
-		}
-
-		public ITypeReference ContainingType {
-			get { return this.arrayType; }
-		}
-
-		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return Dummy.Method; }
-		}
-
-		public IEnumerable<ICustomAttribute> Attributes {
-			get { return Enumerable<ICustomAttribute>.Empty; }
-		}
-
-		public IEnumerable<ILocation> Locations {
-			get { return Enumerable<ILocation>.Empty; }
-		}
-
-		public IName Name {
-			get { return this.name; }
-		}
-		readonly IName name;
-
-		public uint InternedKey {
-			get { return 0; }
-		}
-
-	}
-
-	public class DummyArrayMethodParameter : IParameterTypeInformation
-	{
-
-		public DummyArrayMethodParameter(ISignature containingSignature, ushort index, ITypeReference type)
-		{
-			this.containingSignature = containingSignature;
-			this.index = index;
-			this.type = type;
-		}
-
-		public ISignature ContainingSignature {
-			get { return this.containingSignature; }
-		}
-		ISignature containingSignature;
-
-		public IEnumerable<ICustomModifier> CustomModifiers {
-			get { return Enumerable<ICustomModifier>.Empty; }
-		}
-
-		public ushort Index {
-			get { return this.index; }
-		}
-		ushort index;
-
-		public bool IsByReference {
-			get { return false; }
-		}
-
-		public bool IsModified {
-			get { return false; }
-		}
-
-		public ITypeReference Type {
-			get { return type; }
-		}
-		ITypeReference type;
-
 	}
 
 	public class DummyReturnValueParameter : IParameterDefinition

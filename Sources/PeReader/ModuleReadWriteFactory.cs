@@ -18,6 +18,7 @@ using Microsoft.Cci.UtilityDataStructures;
 using System.Threading;
 using System.Text;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 
 //^ using Microsoft.Contracts;
 
@@ -193,6 +194,9 @@ namespace Microsoft.Cci
 		/// <returns>Assembly that is loaded or Dummy.Assembly in case assembly could not be loaded.</returns>
 			/*?*/		public IAssembly OpenAssembly(IBinaryDocument binaryDocument, out AssemblyIdentity assemblyIdentity		)
 		{
+			Contract.Requires(binaryDocument != null);
+			Contract.Ensures(Contract.Result<IAssembly>() != null);
+
 			assemblyIdentity = null;
 			lock (GlobalLock.LockingObject) {
 				IBinaryDocumentMemoryBlock 				/*?*/binaryDocumentMemoryBlock = this.metadataReaderHost.OpenBinaryDocument(binaryDocument);
@@ -237,6 +241,9 @@ namespace Microsoft.Cci
 		/// <returns>Module that is loaded or Dummy.Module in case module could not be loaded.</returns>
 			/*?*/		public IModule OpenModule(IBinaryDocument binaryDocument, out ModuleIdentity moduleIdentity		)
 		{
+			Contract.Requires(binaryDocument != null);
+			Contract.Ensures(Contract.Result<IModule>() != null);
+
 			moduleIdentity = null;
 			lock (GlobalLock.LockingObject) {
 				IBinaryDocumentMemoryBlock 				/*?*/binaryDocumentMemoryBlock = this.metadataReaderHost.OpenBinaryDocument(binaryDocument);
@@ -289,6 +296,9 @@ namespace Microsoft.Cci
 		/// <returns>Assembly that is loaded or Dummy.Assembly in case assembly could not be loaded.</returns>
 		public IAssembly OpenAssembly(IBinaryDocument binaryDocument)
 		{
+			Contract.Requires(binaryDocument != null);
+			Contract.Ensures(Contract.Result<IAssembly>() != null);
+
 			AssemblyIdentity 			/*?*/retAssemblyIdentity;
 			return this.OpenAssembly(binaryDocument, out retAssemblyIdentity);
 		}
@@ -301,6 +311,9 @@ namespace Microsoft.Cci
 		/// <returns>Module that is loaded or Dummy.Module in case module could not be loaded.</returns>
 		public IModule OpenModule(IBinaryDocument binaryDocument)
 		{
+			Contract.Requires(binaryDocument != null);
+			Contract.Ensures(Contract.Result<IModule>() != null);
+
 			ModuleIdentity 			/*?*/retModuleIdentity;
 			return this.OpenModule(binaryDocument, out retModuleIdentity);
 		}

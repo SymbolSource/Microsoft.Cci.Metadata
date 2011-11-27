@@ -1,9 +1,18 @@
-using System;
+//-----------------------------------------------------------------------------
+//
+// Copyright (c) Microsoft. All rights reserved.
+// This code is licensed under the Microsoft Public License.
+// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+//-----------------------------------------------------------------------------
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Microsoft.Cci.UtilityDataStructures;
 
-namespace Microsoft.Cci
+namespace Microsoft.Cci.ControlAndDataFlowGraph
 {
 
 	public class ControlFlowInferencer<BasicBlock, Instruction> where BasicBlock : Microsoft.Cci.BasicBlock<Instruction>, new() where Instruction : Microsoft.Cci.Instruction, new()
@@ -89,6 +98,7 @@ namespace Microsoft.Cci
 			foreach (var scope in this.localScopeProvider.GetLocalScopes(this.methodBody)) {
 				Contract.Assume(scope != null);
 				this.CreateBlock(scope.Offset);
+				this.CreateBlock(scope.Offset + scope.Length);
 			}
 		}
 
@@ -132,6 +142,11 @@ namespace Microsoft.Cci
 						Contract.Assume(ilOperation.Value is uint);
 						//This is an informally specified property of the Metadata model.
 						this.CreateBlock((uint)ilOperation.Value);
+						lastInstructionWasBranch = true;
+						break;
+					case OperationCode.Ret:
+					case OperationCode.Throw:
+						//The code following these instructions will be dead unless its a branch target, but we may as well end the basic block with the transfer.
 						lastInstructionWasBranch = true;
 						break;
 					case OperationCode.Switch:

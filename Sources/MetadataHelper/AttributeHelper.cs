@@ -38,10 +38,11 @@ namespace Microsoft.Cci
 		public static bool Contains(IEnumerable<ICustomAttribute> attributes, ITypeReference attributeType)
 		{
 			Contract.Requires(attributes != null);
-			Contract.Requires(Contract.ForAll(attributes, x => x != null));
 			Contract.Requires(attributeType != null);
 
 			foreach (ICustomAttribute attribute in attributes) {
+				if (attribute == null)
+					continue;
 				if (TypeHelper.TypesAreEquivalent(attribute.Type, attributeType))
 					return true;
 			}

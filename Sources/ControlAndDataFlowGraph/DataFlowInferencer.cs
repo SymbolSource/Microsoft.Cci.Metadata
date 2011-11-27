@@ -1,9 +1,18 @@
-using System;
+//-----------------------------------------------------------------------------
+//
+// Copyright (c) Microsoft. All rights reserved.
+// This code is licensed under the Microsoft Public License.
+// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+//-----------------------------------------------------------------------------
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Microsoft.Cci.UtilityDataStructures;
 
-namespace Microsoft.Cci
+namespace Microsoft.Cci.ControlAndDataFlowGraph
 {
 
 	public class DataFlowInferencer<BasicBlock, Instruction> where BasicBlock : Microsoft.Cci.BasicBlock<Instruction>, new() where Instruction : Microsoft.Cci.Instruction, new()
@@ -68,6 +77,14 @@ namespace Microsoft.Cci
 				while (this.blocksToVisit.Count != 0)
 					this.DequeueBlockAndSetupDataFlow();
 			}
+			//At this point, all reachable code blocks have had their data flow inferred. Now look for unreachable blocks.
+			foreach (var block in cdfg.AllBlocks) {
+				if (this.blocksAlreadyVisited.Contains(block))
+					continue;
+				blocksToVisit.Enqueue(block);
+				while (blocksToVisit.Count != 0)
+					this.DequeueBlockAndSetupDataFlow();
+			}
 			this.operandStackSetupInstructions.TrimExcess();
 		}
 
@@ -80,6 +97,10 @@ namespace Microsoft.Cci
 				//The checker can't work out that all collection elements are non null, even though there is a contract to that effect
 				if (exinfo.HandlerKind == HandlerKind.Filter) {
 					var block = this.cdfg.BlockFor[exinfo.FilterDecisionStartOffset];
+					Contract.Assume(block != null);
+					//All branch targets must have blocks, but we can't put that in a contract that satisfies the checker.
+					this.AddStackSetup(block, exinfo.ExceptionType);
+					block = this.cdfg.BlockFor[exinfo.HandlerStartOffset];
 					Contract.Assume(block != null);
 					//All branch targets must have blocks, but we can't put that in a contract that satisfies the checker.
 					this.AddStackSetup(block, exinfo.ExceptionType);
@@ -206,9 +227,9 @@ namespace Microsoft.Cci
 				case OperationCode.Sub_Ovf:
 				case OperationCode.Sub_Ovf_Un:
 				case OperationCode.Xor:
-					instruction.Operand2 = stack.Pop();
-					instruction.Operand1 = stack.Pop();
-					stack.Push(instruction);
+					instruction.Operand2 = this.stack.Pop();
+					instruction.Operand1 = this.stack.Pop();
+					this.stack.Push(instruction);
 					break;
 
 				case OperationCode.Arglist:
@@ -250,27 +271,26 @@ namespace Microsoft.Cci
 				case OperationCode.Ldstr:
 				case OperationCode.Ldtoken:
 				case OperationCode.Sizeof:
-					stack.Push(instruction);
+					this.stack.Push(instruction);
 					break;
 
 				case OperationCode.Array_Addr:
 				case OperationCode.Array_Get:
 					Contract.Assume(instruction.Operation.Value is IArrayTypeReference);
 					//This is an informally specified property of the Metadata model.
-					InitializeArrayIndexerInstruction(instruction, stack, (IArrayTypeReference)instruction.Operation.Value);
+					InitializeArrayIndexerInstruction(instruction, this.stack, (IArrayTypeReference)instruction.Operation.Value);
 					break;
 
 				case OperationCode.Array_Create:
 				case OperationCode.Array_Create_WithLowerBound:
 				case OperationCode.Newarr:
-					InitializeArrayCreateInstruction(instruction, stack, instruction.Operation);
+					InitializeArrayCreateInstruction(instruction, this.stack, instruction.Operation);
 					break;
 
 				case OperationCode.Array_Set:
-					instruction.Operand1 = stack.Pop();
 					Contract.Assume(instruction.Operation.Value is IArrayTypeReference);
 					//This is an informally specified property of the Metadata model.
-					InitializeArrayIndexerInstruction(instruction, stack, (IArrayTypeReference)instruction.Operation.Value);
+					InitializeArraySetInstruction(instruction, this.stack, (IArrayTypeReference)instruction.Operation.Value);
 					break;
 
 				case OperationCode.Beq:
@@ -293,8 +313,8 @@ namespace Microsoft.Cci
 				case OperationCode.Blt_Un_S:
 				case OperationCode.Bne_Un:
 				case OperationCode.Bne_Un_S:
-					instruction.Operand2 = stack.Pop();
-					instruction.Operand1 = stack.Pop();
+					instruction.Operand2 = this.stack.Pop();
+					instruction.Operand1 = this.stack.Pop();
 					break;
 
 				case OperationCode.Box:
@@ -358,15 +378,15 @@ namespace Microsoft.Cci
 				case OperationCode.Refanyval:
 				case OperationCode.Unbox:
 				case OperationCode.Unbox_Any:
-					instruction.Operand1 = stack.Pop();
-					stack.Push(instruction);
+					instruction.Operand1 = this.stack.Pop();
+					this.stack.Push(instruction);
 					break;
 
 				case OperationCode.Brfalse:
 				case OperationCode.Brfalse_S:
 				case OperationCode.Brtrue:
 				case OperationCode.Brtrue_S:
-					instruction.Operand1 = stack.Pop();
+					instruction.Operand1 = this.stack.Pop();
 					break;
 
 				case OperationCode.Call:
@@ -374,22 +394,22 @@ namespace Microsoft.Cci
 					Contract.Assume(signature != null);
 					//This is an informally specified property of the Metadata model.
 					if (!signature.IsStatic)
-						instruction.Operand1 = stack.Pop();
-					InitializeArgumentsAndPushReturnResult(instruction, stack, signature);
+						instruction.Operand1 = this.stack.Pop();
+					InitializeArgumentsAndPushReturnResult(instruction, this.stack, signature);
 					break;
 
 				case OperationCode.Callvirt:
-					instruction.Operand1 = stack.Pop();
+					instruction.Operand1 = this.stack.Pop();
 					Contract.Assume(instruction.Operation.Value is ISignature);
 					//This is an informally specified property of the Metadata model.
-					InitializeArgumentsAndPushReturnResult(instruction, stack, (ISignature)instruction.Operation.Value);
+					InitializeArgumentsAndPushReturnResult(instruction, this.stack, (ISignature)instruction.Operation.Value);
 					break;
 
 				case OperationCode.Calli:
 					Contract.Assume(instruction.Operation.Value is ISignature);
 					//This is an informally specified property of the Metadata model.
-					InitializeArgumentsAndPushReturnResult(instruction, stack, (ISignature)instruction.Operation.Value);
-					instruction.Operand1 = stack.Pop();
+					InitializeArgumentsAndPushReturnResult(instruction, this.stack, (ISignature)instruction.Operation.Value);
+					instruction.Operand1 = this.stack.Pop();
 					break;
 
 				case OperationCode.Cpobj:
@@ -403,8 +423,8 @@ namespace Microsoft.Cci
 				case OperationCode.Stind_R8:
 				case OperationCode.Stind_Ref:
 				case OperationCode.Stobj:
-					instruction.Operand2 = stack.Pop();
-					instruction.Operand1 = stack.Pop();
+					instruction.Operand2 = this.stack.Pop();
+					instruction.Operand1 = this.stack.Pop();
 					break;
 
 				case OperationCode.Cpblk:
@@ -419,17 +439,17 @@ namespace Microsoft.Cci
 				case OperationCode.Stelem_R8:
 				case OperationCode.Stelem_Ref:
 					var indexAndValue = new Instruction[2];
-					indexAndValue[1] = stack.Pop();
-					indexAndValue[0] = stack.Pop();
+					indexAndValue[1] = this.stack.Pop();
+					indexAndValue[0] = this.stack.Pop();
 					instruction.Operand2 = indexAndValue;
-					instruction.Operand1 = stack.Pop();
+					instruction.Operand1 = this.stack.Pop();
 					break;
 
 				case OperationCode.Dup:
-					var dupop = stack.Pop();
+					var dupop = this.stack.Pop();
 					instruction.Operand1 = dupop;
-					stack.Push(dupop);
-					stack.Push(instruction);
+					this.stack.Push(dupop);
+					this.stack.Push(instruction);
 					break;
 
 				case OperationCode.Endfilter:
@@ -446,20 +466,25 @@ namespace Microsoft.Cci
 				case OperationCode.Stsfld:
 				case OperationCode.Throw:
 				case OperationCode.Switch:
-					instruction.Operand1 = stack.Pop();
+					instruction.Operand1 = this.stack.Pop();
+					break;
+
+				case OperationCode.Leave:
+				case OperationCode.Leave_S:
+					this.stack.Clear();
 					break;
 
 				case OperationCode.Newobj:
 					Contract.Assume(instruction.Operation.Value is ISignature);
 					//This is an informally specified property of the Metadata model.
-					InitializeArgumentsAndPushReturnResult(instruction, stack, (ISignature)instruction.Operation.Value);
+					InitializeArgumentsAndPushReturnResult(instruction, this.stack, (ISignature)instruction.Operation.Value);
 					//won't push anything
-					stack.Push(instruction);
+					this.stack.Push(instruction);
 					break;
 
 				case OperationCode.Ret:
 					if (this.cdfg.MethodBody.MethodDefinition.Type.TypeCode != PrimitiveTypeCode.Void)
-						instruction.Operand1 = stack.Pop();
+						instruction.Operand1 = this.stack.Pop();
 					break;
 			}
 		}
@@ -510,6 +535,18 @@ namespace Microsoft.Cci
 			stack.Push(instruction);
 		}
 
+		public static void InitializeArraySetInstruction(Instruction instruction, Stack<Instruction> stack, IArrayTypeReference arrayType)
+		{
+			Contract.Requires(instruction != null);
+			Contract.Requires(stack != null);
+			Contract.Requires(arrayType != null);
+			var rank = arrayType.Rank;
+			var indices = new Instruction[rank + 1];
+			instruction.Operand2 = indices;
+			for (var i = rank + 1; i > 0; i--)
+				indices[i - 1] = stack.Pop();
+			instruction.Operand1 = stack.Pop();
+		}
 
 	}
 

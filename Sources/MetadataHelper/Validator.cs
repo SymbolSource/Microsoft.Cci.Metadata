@@ -830,6 +830,10 @@ namespace Microsoft.Cci
 					else
 						refsSeenSoFar.Add(assemblyReference.AssemblyIdentity, assemblyReference);
 				}
+				foreach (var typeMemberReference in module.GetTypeMemberReferences())
+					this.Visit(typeMemberReference);
+				foreach (var typeReference in module.GetTypeReferences())
+					this.Visit(typeReference);
 			}
 
 			/// <summary>
@@ -1412,7 +1416,13 @@ namespace Microsoft.Cci
 					this.ReportError(MetadataError.IncompleteNode, typeReference, "InternedKey");
 				var resolvedType = typeReference.ResolvedType;
 				if (resolvedType != Dummy.Type && typeReference.InternedKey != resolvedType.InternedKey) {
-					//then the type had better be an alias
+					var assemRef = TypeHelper.GetDefiningUnitReference(typeReference) as IAssemblyReference;
+					if (assemRef != null && assemRef.UnifiedAssemblyIdentity != assemRef.AssemblyIdentity) {
+						//The intern keys will differ because of unification. Let's be happy if the names match.
+						if (TypeHelper.GetTypeName(typeReference) == TypeHelper.GetTypeName(resolvedType))
+							return;
+					}
+					//If we get here the type had better be an alias
 					if (!(typeReference is IGenericTypeInstanceReference)) {
 						if (!typeReference.IsAlias)
 							this.ReportError(MetadataError.TypeReferenceResolvesToDifferentType, typeReference); else if (typeReference.AliasForType.AliasedType.ResolvedType.InternedKey != resolvedType.InternedKey)

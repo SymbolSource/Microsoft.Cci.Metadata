@@ -43,6 +43,7 @@ namespace Microsoft.Cci
 	/// <summary>
 	/// An expression that creates an array instance in metadata. Only for use in custom attributes.
 	/// </summary>
+	[ContractClass(typeof(IMetadataCreateArrayContract))]
 	public interface IMetadataCreateArray : IMetadataExpression
 	{
 		/// <summary>
@@ -74,6 +75,64 @@ namespace Microsoft.Cci
 		// ^ ensures count{int size in result} == Rank;
 
 	}
+
+	#region IMetadataCreateArray contract binding
+	[ContractClassFor(typeof(IMetadataCreateArray))]
+	public abstract class IMetadataCreateArrayContract : IMetadataCreateArray
+	{
+		public ITypeReference ElementType {
+			get {
+				Contract.Ensures(Contract.Result<ITypeReference>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<IMetadataExpression> Initializers {
+			get {
+				Contract.Ensures(Contract.Result<IEnumerable<IMetadataExpression>>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<int> LowerBounds {
+			get {
+				Contract.Ensures(Contract.Result<IEnumerable<int>>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public uint Rank {
+			get {
+				Contract.Ensures(Contract.Result<uint>() > 0);
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<ulong> Sizes {
+			get {
+				Contract.Ensures(Contract.Result<IEnumerable<IMetadataExpression>>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public ITypeReference Type {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public IEnumerable<ILocation> Locations {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public void Dispatch(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+	}
+	#endregion
 
 	/// <summary>
 	/// An expression that can be represented directly in metadata.
