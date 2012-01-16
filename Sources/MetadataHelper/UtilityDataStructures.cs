@@ -236,6 +236,8 @@ namespace Microsoft.Cci.UtilityDataStructures
 		/// </summary>
 		public void Add(uint key, InternalT value)
 		{
+			Contract.Requires(value != null);
+
 			if (this.count >= this.resizeCount) {
 				this.Expand();
 			}
@@ -247,6 +249,8 @@ namespace Microsoft.Cci.UtilityDataStructures
 		/// </summary>
 		public bool Contains(uint key, InternalT value)
 		{
+			Contract.Requires(value != null);
+
 			unchecked {
 				uint mask = this.size - 1;
 				var keyValueTable = this.keyValueTable;
@@ -308,6 +312,9 @@ namespace Microsoft.Cci.UtilityDataStructures
 		/// </summary>
 		public void ReplaceEntry(uint key, InternalT oldValue, InternalT newValue)
 		{
+			Contract.Requires(oldValue != null);
+			Contract.Requires(newValue != null);
+
 			unchecked {
 				uint mask = this.size - 1;
 				var keyValueTable = this.keyValueTable;
@@ -1781,6 +1788,7 @@ namespace Microsoft.Cci.UtilityDataStructures
 		uint size;
 		uint resizeCount;
 		uint count;
+		uint dummyCount;
 		const int loadPercent = 60;
 		// ^ invariant (this.Size&(this.Size-1)) == 0;
 
@@ -1840,6 +1848,7 @@ namespace Microsoft.Cci.UtilityDataStructures
 				this.size <<= 1;
 			}
 			this.count = 0;
+			this.dummyCount = 0;
 			this.resizeCount = this.size * 6 / 10;
 			int len = oldElements.Length;
 			for (int i = 0; i < len; ++i) {
@@ -1881,7 +1890,7 @@ namespace Microsoft.Cci.UtilityDataStructures
 		/// <param name="element"></param>
 		public bool Add(object element)
 		{
-			if (this.count >= this.resizeCount)
+			if (this.count + this.dummyCount >= this.resizeCount)
 				this.Expand();
 			return this.AddInternal(element);
 		}
@@ -1931,6 +1940,8 @@ namespace Microsoft.Cci.UtilityDataStructures
 				if (elem != null) {
 					if (object.ReferenceEquals(elem, element)) {
 						elements[tableIndex] = dummyObject;
+						this.count--;
+						this.dummyCount++;
 						return;
 					}
 					uint hash2 = HashHelper.HashInt2(hash);
@@ -1938,6 +1949,8 @@ namespace Microsoft.Cci.UtilityDataStructures
 					while ((elem = elements[tableIndex]) != null) {
 						if (object.ReferenceEquals(elem, element)) {
 							elements[tableIndex] = dummyObject;
+							this.count--;
+							this.dummyCount++;
 							return;
 						}
 						tableIndex = (tableIndex + hash2) & mask;
@@ -2035,7 +2048,9 @@ namespace Microsoft.Cci.UtilityDataStructures
 	/// A list of elements represented as a sublist of a master list. Use this to avoid allocating lots of little list objects.
 	/// </summary>
 	[ContractVerification(true)]
+	#if !__MonoCS__
 	[DebuggerTypeProxy(typeof(Sublist<>.SublistView))]
+	#endif
 	public struct Sublist<T>
 	{
 
@@ -2071,9 +2086,9 @@ namespace Microsoft.Cci.UtilityDataStructures
 			//Contract.Invariant(this.masterList == null || Contract.ForAll(this.masterList, (e) => e != null));
 			Contract.Invariant(this.offset >= 0);
 			Contract.Invariant(this.count >= 0);
-			Contract.Invariant(this.count <= this.masterList.Count);
+			Contract.Invariant(this.masterList == null || this.count <= this.masterList.Count);
 			Contract.Invariant(this.offset + this.count >= 0);
-			Contract.Invariant(this.offset + this.count <= this.masterList.Count);
+			Contract.Invariant(this.masterList == null || this.offset + this.count <= this.masterList.Count);
 		}
 
 
@@ -2109,6 +2124,7 @@ namespace Microsoft.Cci.UtilityDataStructures
 		/// </summary>
 		/// <param name="offset">An offset from the start of this sublist.</param>
 		/// <param name="count">The number of elements that should be in the resulting list.</param>
+		[ContractVerification(false)]
 		public Sublist<T> GetSublist(int offset, int count)
 		{
 			Contract.Requires(offset >= 0);
@@ -2125,6 +2141,7 @@ namespace Microsoft.Cci.UtilityDataStructures
 		/// <param name="i"></param>
 		/// <returns></returns>
 		public T this[int i] {
+			[ContractVerification(false)]
 			get {
 				Contract.Requires(i >= 0);
 				Contract.Requires(i < this.Count);
@@ -2138,6 +2155,7 @@ namespace Microsoft.Cci.UtilityDataStructures
 		/// Returns an object that can enumerate the elements of this list.
 		/// </summary>
 		/// <returns></returns>
+		[ContractVerification(false)]
 		public Enumerator GetEnumerator()
 		{
 			return new Enumerator(this.masterList, this.offset, this.offset + this.count - 1);

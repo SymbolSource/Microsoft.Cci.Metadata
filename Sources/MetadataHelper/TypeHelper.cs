@@ -1309,23 +1309,23 @@ ITypeDefinition typeDef)
 		/// generic parameter must derive from.
 		/// </summary>
 		[Pure()]
-		//^ ensures result == Dummy.Type || result.IsClass;
 		public static ITypeDefinition EffectiveBaseClass(IGenericParameter genericParameter)
 		{
 			Contract.Requires(genericParameter != null);
 			Contract.Ensures(Contract.Result<ITypeDefinition>() != null);
-			Contract.Ensures(Contract.Result<ITypeDefinition>() == Dummy.Type || Contract.Result<ITypeDefinition>().IsClass);
+			Contract.Ensures(Contract.Result<ITypeDefinition>() == Dummy.TypeDefinition || Contract.Result<ITypeDefinition>().IsClass);
 
-			ITypeDefinition result = Dummy.Type;
+			ITypeDefinition result = Dummy.TypeDefinition;
 			if (genericParameter.MustBeValueType) {
 				result = genericParameter.PlatformType.SystemValueType.ResolvedType;
-				Contract.Assume(result == Dummy.Type || result.IsClass);
+				if (result is Dummy || !result.IsClass)
+					return Dummy.TypeDefinition;
 				return result;
 			}
 
-			Contract.Assert(result == Dummy.Type || result.IsClass);
+			Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
 			foreach (ITypeReference cref in genericParameter.Constraints) {
-				Contract.Assert(result == Dummy.Type || result.IsClass);
+				Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
 				ITypeDefinition constraint = cref.ResolvedType;
 				ITypeDefinition baseClass;
 				if (constraint.IsClass) {
@@ -1333,39 +1333,39 @@ ITypeDefinition typeDef)
 				} else {
 					IGenericParameter 					/*?*/tpConstraint = constraint as IGenericParameter;
 					if (tpConstraint == null) {
-						Contract.Assert(result == Dummy.Type || result.IsClass);
+						Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
 						continue;
 					}
 					baseClass = TypeHelper.EffectiveBaseClass(tpConstraint);
-					Contract.Assert(baseClass == Dummy.Type || baseClass.IsClass);
+					Contract.Assert(baseClass == Dummy.TypeDefinition || baseClass.IsClass);
 					if (TypeHelper.TypesAreEquivalent(baseClass, genericParameter.PlatformType.SystemObject)) {
-						Contract.Assert(result == Dummy.Type || result.IsClass);
+						Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
 						continue;
 					}
 				}
-				Contract.Assert(result == Dummy.Type || result.IsClass);
-				Contract.Assert(baseClass == Dummy.Type || baseClass.IsClass);
-				if (result == Dummy.Type) {
+				Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
+				Contract.Assert(baseClass == Dummy.TypeDefinition || baseClass.IsClass);
+				if (result is Dummy) {
 					result = baseClass;
-					Contract.Assert(result == Dummy.Type || result.IsClass);
-				} else if (baseClass != Dummy.Type) {
-					Contract.Assert(result == Dummy.Type || result.IsClass);
+					Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
+				} else if (!(baseClass is Dummy)) {
+					Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
 					ITypeDefinition 					/*?*/bc = TypeHelper.MostDerivedCommonBaseClass(result, baseClass);
 					Contract.Assert(bc == null || bc.IsClass);
 					//Could be null if System.Object cannot be resolved
-					Contract.Assert(result == Dummy.Type || result.IsClass);
+					Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
 					if (bc != null) {
 						Contract.Assert(bc.IsClass);
 						result = bc;
 					}
-					Contract.Assert(result == Dummy.Type || result.IsClass);
+					Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
 				}
-				Contract.Assert(result == Dummy.Type || result.IsClass);
+				Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
 			}
-			Contract.Assert(result == Dummy.Type || result.IsClass);
-			if (result == Dummy.Type) {
+			Contract.Assert(result == Dummy.TypeDefinition || result.IsClass);
+			if (result is Dummy) {
 				result = genericParameter.PlatformType.SystemObject.ResolvedType;
-				Contract.Assume(result == Dummy.Type || result.IsClass);
+				Contract.Assume(result == Dummy.TypeDefinition || result.IsClass);
 			}
 			return result;
 		}
@@ -1570,14 +1570,16 @@ ITypeDefinition typeDef)
 
 			if (TypesAreEquivalent(type1, type2))
 				return type1;
+			if (StackTypesAreEquivalent(type1, type2))
+				return StackType(type1);
 			var typeDef1 = type1.ResolvedType;
 			var typeDef2 = type2.ResolvedType;
-			if (typeDef1 != Dummy.Type && typeDef2 != Dummy.Type)
+			if (!(typeDef1 is Dummy || typeDef2 is Dummy))
 				return MergedType(typeDef1, typeDef2);
-			if (typeDef1 != Dummy.Type) {
+			if (!(typeDef1 is Dummy)) {
 				if (Type1ImplementsType2(typeDef1, type2))
 					return type2;
-			} else if (typeDef2 != Dummy.Type) {
+			} else if (!(typeDef2 is Dummy)) {
 				if (Type1ImplementsType2(typeDef2, type1))
 					return type1;
 			}
@@ -1589,21 +1591,24 @@ ITypeDefinition typeDef)
 		/// If the types cannot be merged, then it returns System.Object.
 		/// </summary>
 		[Pure()]
-		public static ITypeDefinition MergedType(ITypeDefinition type1, ITypeDefinition type2)
+		public static ITypeReference MergedType(ITypeDefinition type1, ITypeDefinition type2)
 		{
 			Contract.Requires(type1 != null);
 			Contract.Requires(type2 != null);
-			Contract.Ensures(Contract.Result<ITypeDefinition>() != null);
+			Contract.Ensures(Contract.Result<ITypeReference>() != null);
 
+			if (TypesAreEquivalent(type1, type2))
+				return type1;
+			if (StackTypesAreEquivalent(type1, type2))
+				return StackType(type1);
 			if (TypeHelper.TypesAreAssignmentCompatible(type1, type2))
 				return type2;
 			if (TypeHelper.TypesAreAssignmentCompatible(type2, type1))
 				return type1;
 			ITypeDefinition 			/*?*/lcbc = TypeHelper.MostDerivedCommonBaseClass(type1, type2);
-			if (lcbc != null) {
+			if (lcbc != null)
 				return lcbc;
-			}
-			return type1.PlatformType.SystemObject.ResolvedType;
+			return type1.PlatformType.SystemObject;
 		}
 
 		/// <summary>
@@ -1663,7 +1668,7 @@ ITypeDefinition typeDef)
 			Contract.Requires(type != null);
 			Contract.Ensures(Contract.Result<ITypeReference>() != null);
 
-			var genericTypeInstance = type as IGenericTypeInstance;
+			var genericTypeInstance = type as IGenericTypeInstanceReference;
 			if (genericTypeInstance != null)
 				return TypeHelper.UninstantiateAndUnspecialize(genericTypeInstance.GenericType);
 			var specializedNestedType = type as ISpecializedNestedTypeReference;
@@ -1865,7 +1870,7 @@ ITypeDefinition typeDef)
 			var namespaceTypeDefinition = namedTypeDefinition as INamespaceTypeDefinition;
 			if (namespaceTypeDefinition != null)
 				return namespaceTypeDefinition.ContainingUnitNamespace;
-			return Dummy.RootUnitNamespace;
+			return Dummy.UnitNamespace;
 		}
 
 		/// <summary>
@@ -1913,6 +1918,7 @@ ITypeDefinition typeDef)
 		public static IUnitReference GetDefiningUnitReference(ITypeReference typeReference)
 		{
 			Contract.Requires(typeReference != null);
+			Contract.Ensures(Contract.Result<IUnitReference>() != null);
 
 			INestedTypeReference 			/*?*/nestedTypeReference = typeReference as INestedTypeReference;
 			while (nestedTypeReference != null) {
@@ -1941,12 +1947,12 @@ ITypeDefinition typeDef)
 			if (genericMethodParameterReference != null)
 				return TypeHelper.GetDefiningUnitReference(genericMethodParameterReference.DefiningMethod.ContainingType);
 			Contract.Assume(false);
-			return Dummy.Unit;
+			return Dummy.UnitReference;
 		}
 
 		/// <summary>
 		/// Returns an event of the given declaring type that has the given name.
-		/// If no such event can be found, Dummy.Event is returned.
+		/// If no such event can be found, Dummy.EventDefinition is returned.
 		/// </summary>
 		/// <param name="declaringType">The type thats declares the field.</param>
 		/// <param name="eventName">The name of the event.</param>
@@ -1960,12 +1966,12 @@ ITypeDefinition typeDef)
 				if (eventDef != null)
 					return eventDef;
 			}
-			return Dummy.Event;
+			return Dummy.EventDefinition;
 		}
 
 		/// <summary>
 		/// Returns a field of the given declaring type that has the given name.
-		/// If no such field can be found, Dummy.Field is returned.
+		/// If no such field can be found, Dummy.FieldDefinition is returned.
 		/// </summary>
 		/// <param name="declaringType">The type thats declares the field.</param>
 		/// <param name="fieldName">The name of the field.</param>
@@ -1979,12 +1985,12 @@ ITypeDefinition typeDef)
 				if (field != null)
 					return field;
 			}
-			return Dummy.Field;
+			return Dummy.FieldDefinition;
 		}
 
 		/// <summary>
 		/// Returns a field of the given declaring type that has the same name and signature as the given field reference.
-		/// If no such field can be found, Dummy.Field is returned.
+		/// If no such field can be found, Dummy.FieldDefinition is returned.
 		/// </summary>
 		/// <param name="declaringType">The type thats declares the field.</param>
 		/// <param name="fieldReference">A reference to the field.</param>
@@ -2015,12 +2021,12 @@ ITypeDefinition typeDef)
 				//TODO: check that custom modifiers are the same
 				return field;
 			}
-			return Dummy.Field;
+			return Dummy.FieldDefinition;
 		}
 
 		/// <summary>
 		/// Returns a method of the given declaring type that has the given name and that matches the given parameter types.
-		/// If no such method can be found, Dummy.Method is returned.
+		/// If no such method can be found, Dummy.MethodDefinition is returned.
 		/// </summary>
 		/// <param name="declaringType">The type that declares the method to be returned.</param>
 		/// <param name="methodName">The name of the method.</param>
@@ -2039,7 +2045,7 @@ ITypeDefinition typeDef)
 
 		/// <summary>
 		/// Returns the first method, if any, of the given list of type members that has the given name and that matches the given parameter types.
-		/// If no such method can be found, Dummy.Method is returned.
+		/// If no such method can be found, Dummy.MethodDefinition is returned.
 		/// </summary>
 		/// <param name="members">A list of type members.</param>
 		/// <param name="methodName">The name of the method.</param>
@@ -2073,12 +2079,12 @@ ITypeDefinition typeDef)
 						return meth;
 				}
 			}
-			return Dummy.Method;
+			return Dummy.MethodDefinition;
 		}
 
 		/// <summary>
 		/// Returns a method of the given declaring type that matches the given method reference.
-		/// If no such method can be found, Dummy.Method is returned.
+		/// If no such method can be found, Dummy.MethodDefinition is returned.
 		/// </summary>
 		/// <param name="declaringType">The type that declares the method to be returned.</param>
 		/// <param name="methodReference">A method reference whose name and signature matches that of the desired result.</param>
@@ -2090,7 +2096,7 @@ ITypeDefinition typeDef)
 			Contract.Ensures(Contract.Result<IMethodDefinition>() != null);
 
 			IMethodDefinition result = TypeHelper.GetMethod(declaringType.GetMembersNamed(methodReference.Name, false), methodReference, resolveTypes);
-			if (result == Dummy.Method) {
+			if (result is Dummy) {
 				foreach (ITypeDefinitionMember member in declaringType.PrivateHelperMembers) {
 					IMethodDefinition 					/*?*/meth = member as IMethodDefinition;
 					if (meth == null)
@@ -2109,7 +2115,7 @@ ITypeDefinition typeDef)
 		}
 
 		/// <summary>
-		/// Gets the Invoke method from the delegate. Returns Dummy.Method if the delegate type is malformed.
+		/// Gets the Invoke method from the delegate. Returns Dummy.MethodDefinition if the delegate type is malformed.
 		/// </summary>
 		/// <param name="delegateType">A delegate type.</param>
 		/// <param name="host">The host application that provided the nametable used by delegateType.</param>
@@ -2126,13 +2132,13 @@ ITypeDefinition typeDef)
 				if (method != null)
 					return method;
 			}
-			return Dummy.Method;
+			return Dummy.MethodDefinition;
 			//Should get here only when the delegate type is obtained from a malformed or malicious referenced assembly.
 		}
 
 		/// <summary>
 		/// Returns the first method, if any, of the given list of type members that matches the signature of the given method.
-		/// If no such method can be found, Dummy.Method is returned.
+		/// If no such method can be found, Dummy.MethodDefinition is returned.
 		/// </summary>
 		/// <param name="members">A list of type members.</param>
 		/// <param name="methodSignature">A method whose signature matches that of the desired result.</param>
@@ -2155,7 +2161,7 @@ ITypeDefinition typeDef)
 				if (MemberHelper.SignaturesAreEqual(meth, methodSignature, resolveTypes))
 					return meth;
 			}
-			return Dummy.Method;
+			return Dummy.MethodDefinition;
 		}
 
 		/// <summary>
@@ -2184,7 +2190,7 @@ ITypeDefinition typeDef)
 
 		/// <summary>
 		/// Returns the nested type, if any, of the given declaring type with the given name and given generic parameter count.
-		/// If no such type is found, Dummy.NestedType is returned.
+		/// If no such type is found, Dummy.NestedTypeDefinition is returned.
 		/// </summary>
 		/// <param name="declaringType">The type to search for a nested type with the given name and number of generic parameters.</param>
 		/// <param name="typeName">The name of the nested type to return.</param>
@@ -2204,7 +2210,7 @@ ITypeDefinition typeDef)
 					continue;
 				return nestedType;
 			}
-			return Dummy.NestedType;
+			return Dummy.NestedTypeDefinition;
 		}
 
 		/// <summary>
@@ -2993,7 +2999,7 @@ ITypeDefinition type1, ITypeDefinition type2)
 				return true;
 			if (!resolveTypes)
 				return false;
-			return type1.ResolvedType == type2.ResolvedType;
+			return type1.ResolvedType.InternedKey == type2.ResolvedType.InternedKey;
 		}
 
 		/// <summary>
@@ -3261,7 +3267,7 @@ ITypeDefinition type1, ITypeDefinition type2)
 			Contract.Ensures(Contract.Result<string>() != null);
 
 			string delim = ((formattingOptions & NameFormattingOptions.OmitWhiteSpaceAfterListDelimiter) == 0) ? ", " : ",";
-			if ((formattingOptions & NameFormattingOptions.TypeParameters) != 0 && (formattingOptions & NameFormattingOptions.FormattingForDocumentationId) == 0 && genericParameterCount > 0 && type.ResolvedType != Dummy.Type) {
+			if ((formattingOptions & NameFormattingOptions.TypeParameters) != 0 && (formattingOptions & NameFormattingOptions.FormattingForDocumentationId) == 0 && genericParameterCount > 0 && !(type.ResolvedType is Dummy)) {
 				StringBuilder sb = new StringBuilder(typeName);
 				sb.Append("<");
 				if ((formattingOptions & NameFormattingOptions.EmptyTypeParameterList) == 0) {
@@ -3616,7 +3622,7 @@ ITypeDefinition type1, ITypeDefinition type2)
 			var tname = nsType.Name.Value;
 			if ((formattingOptions & NameFormattingOptions.EscapeKeyword) != 0)
 				tname = this.EscapeKeyword(tname);
-			if ((formattingOptions & NameFormattingOptions.SupressAttributeSuffix) != 0 && AttributeHelper.IsAttributeType(nsType.ResolvedType) & tname.EndsWith("Attribute"))
+			if ((formattingOptions & NameFormattingOptions.SupressAttributeSuffix) != 0 && AttributeHelper.IsAttributeType(nsType.ResolvedType) & tname.EndsWith("Attribute", StringComparison.Ordinal))
 				tname = tname.Substring(0, tname.Length - 9);
 			tname = this.AddGenericParametersIfNeeded(nsType, nsType.GenericParameterCount, formattingOptions, tname);
 			if ((formattingOptions & NameFormattingOptions.OmitContainingNamespace) == 0 && !(nsType.ContainingUnitNamespace is IRootUnitNamespaceReference))
@@ -3685,7 +3691,7 @@ ITypeDefinition type1, ITypeDefinition type2)
 			var tname = nestedType.Name.Value;
 			if ((formattingOptions & NameFormattingOptions.EscapeKeyword) != 0)
 				tname = this.EscapeKeyword(tname);
-			if ((formattingOptions & NameFormattingOptions.SupressAttributeSuffix) != 0 && AttributeHelper.IsAttributeType(nestedType.ResolvedType) & tname.EndsWith("Attribute"))
+			if ((formattingOptions & NameFormattingOptions.SupressAttributeSuffix) != 0 && AttributeHelper.IsAttributeType(nestedType.ResolvedType) & tname.EndsWith("Attribute", StringComparison.Ordinal))
 				tname = tname.Substring(0, tname.Length - 9);
 			tname = this.AddGenericParametersIfNeeded(nestedType, nestedType.GenericParameterCount, formattingOptions, tname);
 			if ((formattingOptions & NameFormattingOptions.OmitContainingType) == 0) {
@@ -3720,6 +3726,8 @@ ITypeDefinition type1, ITypeDefinition type2)
 			Contract.Requires(type != null);
 			Contract.Ensures(Contract.Result<string>() != null);
 
+			if (type is Dummy)
+				return "Microsoft.Cci.DummyTypeReference";
 			if ((formattingOptions & NameFormattingOptions.UseTypeKeywords) != 0) {
 				switch (type.TypeCode) {
 					case PrimitiveTypeCode.Boolean:
@@ -3788,8 +3796,8 @@ ITypeDefinition type1, ITypeDefinition type2)
 			IModifiedTypeReference 			/*?*/modifiedType = type as IModifiedTypeReference;
 			if (modifiedType != null)
 				return this.GetModifiedTypeName(modifiedType, formattingOptions);
-			if (type == Dummy.TypeReference || type == Dummy.Type || type.ResolvedType == Dummy.Type)
-				return "Microsoft.Cci.DummyType";
+			if (type.ResolvedType != type && !(type.ResolvedType is Dummy))
+				return this.GetTypeName(type.ResolvedType, formattingOptions);
 			return "unknown type: " + type.GetType().ToString();
 		}
 

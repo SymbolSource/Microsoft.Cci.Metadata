@@ -16,8 +16,6 @@ using System.Diagnostics.Contracts;
 using System.Text;
 using Microsoft.Cci.UtilityDataStructures;
 
-//^ using Microsoft.Contracts;
-
 namespace Microsoft.Cci
 {
 	using Microsoft.Cci.PeWriterInternal;
@@ -26,7 +24,6 @@ namespace Microsoft.Cci
 	public class PeWriter : ITokenProvider
 	{
 
-		//^ [NotDelayed]
 			/*?*/			/*?*/			/*?*/			/*?*/		public PeWriter(IModule module, IMetadataHost host, System.IO.Stream peStream, ISourceLocationProvider sourceLocationProvider		, ILocalScopeProvider localScopeProvider		, IPdbWriter pdbWriter		, params CustomSectionProvider[] customSectionProviders		)
 		{
 			this.module = module;
@@ -58,6 +55,8 @@ namespace Microsoft.Cci
 		CustomSectionProvider[] 		/*?*/customSectionProviders;
 		PeDebugDirectory 		/*?*/debugDirectory;
 		bool emitRuntimeStartupStub;
+		BinaryWriter extendedDataWriter = new BinaryWriter(new MemoryStream());
+		SectionHeader extendedDataSection = new SectionHeader();
 		List<IEventDefinition> eventDefList = new List<IEventDefinition>();
 		MemoryStream emptyStream = new MemoryStream(0);
 		Hashtable exportedTypeIndex = new Hashtable();
@@ -127,6 +126,7 @@ namespace Microsoft.Cci
 		SectionHeader tlsSection = new SectionHeader();
 		BinaryWriter tlsDataWriter = new BinaryWriter(new MemoryStream());
 		uint tokenOfFirstMethodWithDebugInfo;
+		IEnumerable<INamespaceScope> lastUsingInfo;
 		uint tokenOfLastMethodWithUsingInfo;
 		Hashtable typeDefIndex = new Hashtable();
 		public List<ITypeDefinition> typeDefList = new List<ITypeDefinition>();
@@ -377,6 +377,7 @@ namespace Microsoft.Cci
 			writer.WriteTextSection();
 			writer.WriteRdataSection();
 			writer.WriteSdataSection();
+			writer.WriteExtendedDataSection();
 			writer.WriteCoverSection();
 			writer.WriteTlsSection();
 			writer.WriteResourceSection();
@@ -385,7 +386,7 @@ namespace Microsoft.Cci
 			writer.WriteUninterpretedSections();
 
 			if (pdbWriter != null) {
-				if (module.EntryPoint != Dummy.MethodReference)
+				if (!(module.EntryPoint is Dummy))
 					pdbWriter.SetEntryPoint(writer.GetMethodToken(module.EntryPoint));
 			}
 		}
@@ -557,6 +558,9 @@ namespace Microsoft.Cci
 			if (this.sdataWriter.BaseStream.Length > 0)
 				numberOfSections++;
 			//.sdata
+			if (this.extendedDataWriter.BaseStream.Length > 0)
+				numberOfSections++;
+			//.datax
 			if (this.coverageDataWriter.BaseStream.Length > 0)
 				numberOfSections++;
 			//.cover
@@ -731,10 +735,10 @@ namespace Microsoft.Cci
 
 		public void CreateIndicesFor(IMethodDefinition methodDef)
 		{
-			if (methodDef.IsForwardReference && !(methodDef.IsAbstract || methodDef.IsExternal) && (methodDef.Body == Dummy.MethodBody))
+			if (methodDef.IsForwardReference && !(methodDef.IsAbstract || methodDef.IsExternal) && (methodDef.Body is Dummy))
 				return;
 			this.parameterListIndex.Add(methodDef, (uint)this.parameterDefList.Count + 1);
-			if (methodDef.ReturnValueIsMarshalledExplicitly || IteratorHelper.EnumerableIsNotEmpty(methodDef.ReturnValueAttributes) || methodDef.ReturnValueName != Dummy.Name)
+			if (methodDef.ReturnValueIsMarshalledExplicitly || IteratorHelper.EnumerableIsNotEmpty(methodDef.ReturnValueAttributes) || !(methodDef.ReturnValueName is Dummy))
 				this.parameterDefList.Add(new DummyReturnValueParameter(methodDef));
 			foreach (IParameterDefinition parDef in methodDef.Parameters) {
 				// No explicit param row is needed if param has no flags (other than optionally IN),
@@ -847,7 +851,7 @@ namespace Microsoft.Cci
 			ClrHeader clrHeader = this.clrHeader;
 			clrHeader.codeManagerTable.RelativeVirtualAddress = 0;
 			clrHeader.codeManagerTable.Size = 0;
-			if (this.module.EntryPoint == Dummy.MethodReference)
+			if (this.module.EntryPoint is Dummy)
 				clrHeader.entryPointToken = 0;
 			else
 				clrHeader.entryPointToken = this.GetMethodToken(this.module.EntryPoint);
@@ -880,7 +884,7 @@ namespace Microsoft.Cci
 			ntHeader.BaseOfData = this.rdataSection.RelativeVirtualAddress;
 			ntHeader.PointerToSymbolTable = 0;
 			ntHeader.SizeOfCode = this.textSection.SizeOfRawData;
-			ntHeader.SizeOfInitializedData = this.rdataSection.SizeOfRawData + this.coverSection.SizeOfRawData + this.sdataSection.SizeOfRawData + this.tlsSection.SizeOfRawData + this.resourceSection.SizeOfRawData + this.relocSection.SizeOfRawData;
+			ntHeader.SizeOfInitializedData = this.rdataSection.SizeOfRawData + this.coverSection.SizeOfRawData + this.extendedDataSection.SizeOfRawData + this.sdataSection.SizeOfRawData + this.tlsSection.SizeOfRawData + this.resourceSection.SizeOfRawData + this.relocSection.SizeOfRawData;
 			ntHeader.SizeOfHeaders = Aligned(this.ComputeSizeOfPeHeaders(numberOfSections), this.module.FileAlignment);
 			ntHeader.SizeOfImage = Aligned(this.relocSection.RelativeVirtualAddress + this.relocSection.VirtualSize, 0x2000);
 			ntHeader.SizeOfUninitializedData = 0;
@@ -995,15 +999,27 @@ namespace Microsoft.Cci
 			this.sdataSection.SizeOfRawData = Aligned(this.sdataWriter.BaseStream.Length, this.module.FileAlignment);
 			this.sdataSection.VirtualSize = this.sdataWriter.BaseStream.Length;
 
+			this.extendedDataSection.Characteristics = 0xc0000040u;
+			//section is write + read + initialized 
+			this.extendedDataSection.Name = ".datax";
+			this.extendedDataSection.NumberOfLinenumbers = 0;
+			this.extendedDataSection.NumberOfRelocations = 0;
+			this.extendedDataSection.PointerToLinenumbers = 0;
+			this.extendedDataSection.PointerToRawData = this.sdataSection.PointerToRawData + this.sdataSection.SizeOfRawData;
+			this.extendedDataSection.PointerToRelocations = 0;
+			this.extendedDataSection.RelativeVirtualAddress = Aligned(this.sdataSection.RelativeVirtualAddress + this.sdataSection.VirtualSize, 0x2000);
+			this.extendedDataSection.SizeOfRawData = Aligned(this.extendedDataWriter.BaseStream.Length, this.module.FileAlignment);
+			this.extendedDataSection.VirtualSize = this.extendedDataWriter.BaseStream.Length;
+
 			this.coverSection.Characteristics = 0xc8000040u;
 			//section is not paged + write + read + initialized 
 			this.coverSection.Name = ".cover";
 			this.coverSection.NumberOfLinenumbers = 0;
 			this.coverSection.NumberOfRelocations = 0;
 			this.coverSection.PointerToLinenumbers = 0;
-			this.coverSection.PointerToRawData = this.sdataSection.PointerToRawData + this.sdataSection.SizeOfRawData;
+			this.coverSection.PointerToRawData = this.extendedDataSection.PointerToRawData + this.extendedDataSection.SizeOfRawData;
 			this.coverSection.PointerToRelocations = 0;
-			this.coverSection.RelativeVirtualAddress = Aligned(this.sdataSection.RelativeVirtualAddress + this.sdataSection.VirtualSize, 0x2000);
+			this.coverSection.RelativeVirtualAddress = Aligned(this.extendedDataSection.RelativeVirtualAddress + this.extendedDataSection.VirtualSize, 0x2000);
 			this.coverSection.SizeOfRawData = Aligned(this.coverageDataWriter.BaseStream.Length, this.module.FileAlignment);
 			this.coverSection.VirtualSize = this.coverageDataWriter.BaseStream.Length;
 
@@ -1227,6 +1243,9 @@ namespace Microsoft.Cci
 				case PESectionKind.CoverageData:
 					sectionWriter = this.coverageDataWriter;
 					break;
+				case PESectionKind.ExtendedData:
+					sectionWriter = this.extendedDataWriter;
+					break;
 				case PESectionKind.StaticData:
 					sectionWriter = this.sdataWriter;
 					break;
@@ -1316,7 +1335,7 @@ namespace Microsoft.Cci
 				result |= 0x400;
 			if (fieldDef.IsMarshalledExplicitly)
 				result |= 0x1000;
-			if (fieldDef.CompileTimeValue != Dummy.Constant)
+			if (!(fieldDef.CompileTimeValue is Dummy))
 				result |= 0x8000;
 			return result;
 		}
@@ -1494,9 +1513,8 @@ namespace Microsoft.Cci
 
 		public uint GetMemberRefIndex(ITypeMemberReference memberRef)
 		{
-			if (memberRef == Dummy.MethodReference || memberRef == Dummy.FieldReference || memberRef == Dummy.Method || memberRef == Dummy.Field) {
+			if (memberRef is Dummy)
 				return 0;
-			}
 			uint methodRefIndex = 0;
 			if (this.memberRefInstanceIndex.TryGetValue(memberRef, out methodRefIndex))
 				return methodRefIndex;
@@ -1805,6 +1823,8 @@ namespace Microsoft.Cci
 					return this.rdataSection;
 				case PESectionKind.CoverageData:
 					return this.coverSection;
+				case PESectionKind.ExtendedData:
+					return this.extendedDataSection;
 				case PESectionKind.StaticData:
 					return this.sdataSection;
 				case PESectionKind.ThreadLocalStorage:
@@ -2068,7 +2088,7 @@ namespace Microsoft.Cci
 
 		public void RecordTypeReference(ITypeReference typeReference)
 		{
-			if (typeReference == Dummy.TypeReference)
+			if (typeReference is Dummy)
 				return;
 			var nsTr = typeReference as INamespaceTypeReference;
 			if ((nsTr == null || !nsTr.KeepDistinctFromDefinition) && this.typeDefIndex.ContainsKey(typeReference.InternedKey))
@@ -2081,7 +2101,7 @@ namespace Microsoft.Cci
 
 		public uint GetTypeToken(ITypeReference typeReference)
 		{
-			if (typeReference == Dummy.TypeReference || typeReference == Dummy.Type)
+			if (typeReference is Dummy)
 				return 0;
 			var nsTr = typeReference as INamespaceTypeReference;
 			if (nsTr == null || !nsTr.KeepDistinctFromDefinition) {
@@ -2521,7 +2541,7 @@ namespace Microsoft.Cci
 			uint fieldDefIndex = 0;
 			foreach (IFieldDefinition fieldDef in this.fieldDefList) {
 				fieldDefIndex++;
-				if (fieldDef.CompileTimeValue == Dummy.Constant)
+				if (fieldDef.CompileTimeValue is Dummy)
 					continue;
 				ConstantRow r = new ConstantRow();
 				r.Type = GetTypeCodeByteFor(fieldDef.CompileTimeValue.Value);
@@ -2642,7 +2662,7 @@ namespace Microsoft.Cci
 				CustomAttributeRow r = new CustomAttributeRow();
 				r.Parent = (parentIndex << 5) | tag;
 				foreach (ICustomAttribute customAttribute in parent.Attributes) {
-					if (customAttribute.Constructor == Dummy.MethodReference) {
+					if (customAttribute.Constructor is Dummy) {
 						//TODO: error
 					}
 					r.Type = this.GetCustomAttributeTypeCodedIndex(customAttribute.Constructor);
@@ -2730,7 +2750,7 @@ namespace Microsoft.Cci
 
 		public void PopulateEventMapTableRows()
 		{
-			ITypeDefinition lastParent = Dummy.Type;
+			ITypeDefinition lastParent = Dummy.TypeDefinition;
 			uint eventIndex = 0;
 			foreach (IEventDefinition eventDef in this.eventDefList) {
 				eventIndex++;
@@ -3081,7 +3101,7 @@ namespace Microsoft.Cci
 					if (nsTypeDef != null)
 						r.Attributes = nsTypeDef.AttributesFor(interfaceRef);
 					else
-						r.Attributes = Dummy.Type.Attributes;
+						r.Attributes = Dummy.TypeDefinition.Attributes;
 					this.interfaceImplTable.Add(r);
 				}
 			}
@@ -3095,7 +3115,7 @@ namespace Microsoft.Cci
 
 			public IEnumerable<ICustomAttribute> Attributes { get; set; }
 			public IEnumerable<ILocation> Locations {
-				get { return Dummy.Type.Locations; }
+				get { return Dummy.TypeDefinition.Locations; }
 			}
 			public void Dispatch(IMetadataVisitor visitor)
 			{
@@ -3351,7 +3371,7 @@ namespace Microsoft.Cci
 
 		public void PopulatePropertyMapTableRows()
 		{
-			ITypeDefinition lastParent = Dummy.Type;
+			ITypeDefinition lastParent = Dummy.TypeDefinition;
 			uint propertyIndex = 0;
 			foreach (IPropertyDefinition propertyDef in this.propertyDefList) {
 				propertyIndex++;
@@ -4089,7 +4109,7 @@ namespace Microsoft.Cci
 		public void SerializeNamespaceScopes(IMethodBody methodBody)
 		{
 			IEnumerable<INamespaceScope> scopes = this.localScopeProvider.GetNamespaceScopes(methodBody);
-			if (this.tokenOfLastMethodWithUsingInfo != 0 && IteratorHelper.EnumerableIsEmpty(scopes))
+			if (this.tokenOfLastMethodWithUsingInfo != 0 && (this.lastUsingInfo == scopes || IteratorHelper.EnumerableIsEmpty(scopes)))
 				return;
 			this.tokenOfLastMethodWithUsingInfo = this.GetMethodToken(methodBody.MethodDefinition);
 			foreach (INamespaceScope nsScope in scopes) {
@@ -4146,11 +4166,12 @@ namespace Microsoft.Cci
 				this.SerializeReferenceToIteratorClass(methodBody);
 				return;
 			}
-			IEnumerable<INamespaceScope> scopes = this.localScopeProvider.GetNamespaceScopes(methodBody);
-			if (this.tokenOfLastMethodWithUsingInfo != 0 && IteratorHelper.EnumerableIsEmpty(scopes)) {
+			var scopes = this.localScopeProvider.GetNamespaceScopes(methodBody);
+			if (this.tokenOfLastMethodWithUsingInfo != 0 && (scopes == this.lastUsingInfo || IteratorHelper.EnumerableIsEmpty(scopes))) {
 				this.SerializeReferenceToLastMethodWithUsingInfo();
 				return;
 			}
+			this.lastUsingInfo = scopes;
 			MemoryStream customMetadata = new MemoryStream();
 			List<ushort> usingCounts = new List<ushort>();
 			BinaryWriter cmw = new BinaryWriter(customMetadata);
@@ -4660,7 +4681,7 @@ namespace Microsoft.Cci
 					if (marshallingInformation.SafeArrayElementSubtype != System.Runtime.InteropServices.VarEnum.VT_EMPTY) {
 						writer.WriteByte((byte)marshallingInformation.SafeArrayElementSubtype);
 						if (marshallingInformation.SafeArrayElementSubtype == System.Runtime.InteropServices.VarEnum.VT_DISPATCH || marshallingInformation.SafeArrayElementSubtype == System.Runtime.InteropServices.VarEnum.VT_UNKNOWN || marshallingInformation.SafeArrayElementSubtype == System.Runtime.InteropServices.VarEnum.VT_RECORD)
-							if (marshallingInformation.SafeArrayElementUserDefinedSubtype != Dummy.TypeReference)
+							if (!(marshallingInformation.SafeArrayElementUserDefinedSubtype is Dummy))
 								this.SerializeTypeName(marshallingInformation.SafeArrayElementUserDefinedSubtype, writer);
 					}
 					break;
@@ -5437,6 +5458,7 @@ namespace Microsoft.Cci
 			WriteSectionHeader(this.textSection, writer);
 			WriteSectionHeader(this.rdataSection, writer);
 			WriteSectionHeader(this.sdataSection, writer);
+			WriteSectionHeader(this.extendedDataSection, writer);
 			WriteSectionHeader(this.coverSection, writer);
 			WriteSectionHeader(this.resourceSection, writer);
 			WriteSectionHeader(this.relocSection, writer);
@@ -5725,6 +5747,14 @@ namespace Microsoft.Cci
 				return;
 			this.peStream.Position = this.coverSection.PointerToRawData;
 			this.coverageDataWriter.BaseStream.WriteTo(this.peStream);
+		}
+
+		public void WriteExtendedDataSection()
+		{
+			if (this.extendedDataWriter.BaseStream.Length == 0)
+				return;
+			this.peStream.Position = this.extendedDataSection.PointerToRawData;
+			this.extendedDataWriter.BaseStream.WriteTo(this.peStream);
 		}
 
 		public void WriteRdataSection()

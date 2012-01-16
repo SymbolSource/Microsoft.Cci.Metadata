@@ -1447,7 +1447,7 @@ namespace Microsoft.Cci
 		/// Returns the generic type of which this type is an instance.
 		/// </summary>
 		INamedTypeReference GenericType { get; }
-		//^ ensures result.ResolveType == Dummy.NamedTypeDefinition || result.ResolvedType.IsGeneric;
+		//^ ensures result.ResolveType == Dummy.NamedTypeReference || result.ResolvedType.IsGeneric;
 
 	}
 
@@ -1465,7 +1465,7 @@ namespace Microsoft.Cci
 		public INamedTypeReference GenericType {
 			get {
 				Contract.Ensures(Contract.Result<ITypeReference>() != null);
-				//Contract.Ensures(Contract.Result<ITypeReference>().ResolvedType == Dummy.NamedTypeDefinition || Contract.Result<ITypeReference>().ResolvedType.IsGeneric);
+				//Contract.Ensures(Contract.Result<ITypeReference>().ResolvedType == Dummy.NamedTypeReference || Contract.Result<ITypeReference>().ResolvedType.IsGeneric);
 				throw new NotImplementedException();
 			}
 		}
@@ -1892,6 +1892,7 @@ namespace Microsoft.Cci
 
 		public IUnitNamespace ContainingUnitNamespace {
 			get {
+				Contract.Ensures(Contract.Result<IUnitNamespace>() != null);
 				throw new NotImplementedException();
 			}
 		}
@@ -2783,6 +2784,7 @@ namespace Microsoft.Cci
 	/// <summary>
 	/// Models an explicit implementation or override of a base class virtual method or an explicit implementation of an interface method.
 	/// </summary>
+	[ContractClass(typeof(IMethodImplementationContract))]
 	public interface IMethodImplementation
 	{
 
@@ -2808,6 +2810,44 @@ namespace Microsoft.Cci
 		/// </summary>
 		IMethodReference ImplementingMethod { get; }
 	}
+
+	#region IMethodImplementation contract binding
+	[ContractClassFor(typeof(IMethodImplementation))]
+	public abstract class IMethodImplementationContract : IMethodImplementation
+	{
+		#region IMethodImplementation Members
+
+		public ITypeDefinition ContainingType {
+			get {
+				Contract.Ensures(Contract.Result<ITypeDefinition>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public void Dispatch(IMetadataVisitor visitor)
+		{
+			Contract.Requires(visitor != null);
+			throw new NotImplementedException();
+		}
+
+		public IMethodReference ImplementedMethod {
+			get {
+				Contract.Ensures(Contract.Result<IMethodReference>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public IMethodReference ImplementingMethod {
+			get {
+				Contract.Ensures(Contract.Result<IMethodReference>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+	}
+	#endregion
+
 
 	/// <summary>
 	/// A type reference that has custom modifiers associated with it. For example a reference to the target type of a managed pointer to a constant.
@@ -4650,7 +4690,7 @@ namespace Microsoft.Cci
 			get {
 				Contract.Ensures(Contract.Result<ITypeDefinition>() != null);
 				Contract.Ensures(!(this is ITypeDefinition) || Contract.Result<ITypeDefinition>() == this);
-				//Contract.Ensures(Contract.Result<ITypeDefinition>() == Dummy.Type || this.IsAlias ||
+				//Contract.Ensures(Contract.Result<ITypeDefinition>() == Dummy.TypeDefinition || this.IsAlias ||
 				//    Contract.Result<ITypeDefinition>().InternedKey == this.InternedKey);
 				throw new NotImplementedException();
 			}

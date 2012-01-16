@@ -13,10 +13,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Diagnostics.Contracts;
-//^ using Microsoft.Contracts;
 
-//  TODO: Sometime make the methods and properties of dummy objects Explicit impls so
-//  that we can track addition and removal of methods and properties.
 namespace Microsoft.Cci
 {
 
@@ -30,12 +27,32 @@ namespace Microsoft.Cci
 			get {
 				Contract.Ensures(Contract.Result<IAliasForType>() != null);
 				if (Dummy.aliasForType == null)
-					Interlocked.CompareExchange(ref Dummy.aliasForType, new DummyAliasForType(), null);
+					Interlocked.CompareExchange(ref Dummy.aliasForType, new DummyNamespaceAliasForType(), null);
 				Contract.Assume(Dummy.aliasForType != null);
 				return Dummy.aliasForType;
 			}
 		}
 		private static IAliasForType 		/*?*/aliasForType;
+
+		public static IAssembly Assembly {
+			get {
+				Contract.Ensures(Contract.Result<IAssembly>() != null);
+				if (Dummy.assembly == null)
+					Interlocked.CompareExchange(ref Dummy.assembly, new DummyAssembly(), null);
+				return Dummy.assembly;
+			}
+		}
+		private static IAssembly 		/*?*/assembly;
+
+		public static AssemblyIdentity AssemblyIdentity {
+			get {
+				Contract.Ensures(Contract.Result<AssemblyIdentity>() != null);
+				if (Dummy.assemblyIdentity == null)
+					Interlocked.CompareExchange(ref Dummy.assemblyIdentity, new AssemblyIdentity(Dummy.name, "", new Version(), Enumerable<byte>.Empty, ""), null);
+				return Dummy.assemblyIdentity;
+			}
+		}
+		private static AssemblyIdentity 		/*?*/assemblyIdentity;
 
 		public static IMetadataHost CompilationHostEnvironment {
 			get {
@@ -70,14 +87,28 @@ namespace Microsoft.Cci
 		public static IEventDefinition Event {
 			get {
 				Contract.Ensures(Contract.Result<IEventDefinition>() != null);
-				if (Dummy.@event == null)
-					Interlocked.CompareExchange(ref Dummy.@event, new DummyEventDefinition(), null);
-				return Dummy.@event;
+				return Dummy.EventDefinition;
 			}
 		}
-		private static IEventDefinition 		/*?*/@event;
+
+		public static IEventDefinition EventDefinition {
+			get {
+				Contract.Ensures(Contract.Result<IEventDefinition>() != null);
+				if (Dummy.eventDefinition == null)
+					Interlocked.CompareExchange(ref Dummy.eventDefinition, new DummyEventDefinition(), null);
+				return Dummy.eventDefinition;
+			}
+		}
+		private static IEventDefinition 		/*?*/eventDefinition;
 
 		public static IFieldDefinition Field {
+			get {
+				Contract.Ensures(Contract.Result<IFieldDefinition>() != null);
+				return Dummy.FieldDefinition;
+			}
+		}
+
+		public static IFieldDefinition FieldDefinition {
 			get {
 				Contract.Ensures(Contract.Result<IFieldDefinition>() != null);
 				if (Dummy.field == null)
@@ -118,17 +149,24 @@ namespace Microsoft.Cci
 		private static DummyGenericMethodParameter 		/*?*/genericMethodParameter;
 
 		public static IGenericTypeInstance GenericTypeInstance {
-			//^ ensures !result.IsGeneric;
 			get {
 				Contract.Ensures(Contract.Result<IGenericTypeInstance>() != null);
 				if (Dummy.genericTypeInstance == null)
 					Interlocked.CompareExchange(ref Dummy.genericTypeInstance, new DummyGenericTypeInstance(), null);
-				DummyGenericTypeInstance result = Dummy.genericTypeInstance;
-				//^ assume !result.IsGeneric; //the post condition says so
-				return result;
+				return Dummy.genericTypeInstance;
 			}
 		}
 		private static DummyGenericTypeInstance 		/*?*/genericTypeInstance;
+
+		public static IGenericTypeInstanceReference GenericTypeInstanceReference {
+			get {
+				Contract.Ensures(Contract.Result<IGenericTypeInstanceReference>() != null);
+				if (Dummy.genericTypeInstanceReference == null)
+					Interlocked.CompareExchange(ref Dummy.genericTypeInstanceReference, new DummyGenericTypeInstance(), null);
+				return Dummy.genericTypeInstanceReference;
+			}
+		}
+		private static IGenericTypeInstanceReference 		/*?*/genericTypeInstanceReference;
 
 		public static IGenericTypeParameter GenericTypeParameter {
 			get {
@@ -143,12 +181,19 @@ namespace Microsoft.Cci
 		public static IMethodDefinition Method {
 			get {
 				Contract.Ensures(Contract.Result<IMethodDefinition>() != null);
-				if (Dummy.method == null)
-					Interlocked.CompareExchange(ref Dummy.method, new DummyMethodDefinition(), null);
-				return Dummy.method;
+				return Dummy.MethodDefinition;
 			}
 		}
-		private static IMethodDefinition 		/*?*/method;
+
+		public static IMethodDefinition MethodDefinition {
+			get {
+				Contract.Ensures(Contract.Result<IMethodDefinition>() != null);
+				if (Dummy.methodDefinition == null)
+					Interlocked.CompareExchange(ref Dummy.methodDefinition, new DummyMethodDefinition(), null);
+				return Dummy.methodDefinition;
+			}
+		}
+		private static IMethodDefinition 		/*?*/methodDefinition;
 
 		public static IMethodBody MethodBody {
 			get {
@@ -180,21 +225,11 @@ namespace Microsoft.Cci
 		}
 		private static IMetadataNamedArgument 		/*?*/namedArgument;
 
-		public static INamedTypeDefinition NamedTypeDefinition {
-			get {
-				Contract.Ensures(Contract.Result<INamedTypeDefinition>() != null);
-				if (Dummy.namedTypeDefinition == null)
-					Interlocked.CompareExchange(ref Dummy.namedTypeDefinition, new DummyNamedTypeDefinition(), null);
-				return Dummy.namedTypeDefinition;
-			}
-		}
-		private static INamedTypeDefinition 		/*?*/namedTypeDefinition;
-
 		public static INamedTypeReference NamedTypeReference {
 			get {
 				Contract.Ensures(Contract.Result<INamedTypeReference>() != null);
 				if (Dummy.namedTypeReference == null)
-					Interlocked.CompareExchange(ref Dummy.namedTypeReference, new DummyNamedTypeReference(), null);
+					Interlocked.CompareExchange(ref Dummy.namedTypeReference, new DummyNamespaceTypeReference(), null);
 				return Dummy.namedTypeReference;
 			}
 		}
@@ -213,12 +248,39 @@ namespace Microsoft.Cci
 		public static INestedTypeDefinition NestedType {
 			get {
 				Contract.Ensures(Contract.Result<INestedTypeDefinition>() != null);
-				if (Dummy.nestedType == null)
-					Interlocked.CompareExchange(ref Dummy.nestedType, new DummyNestedType(), null);
-				return Dummy.nestedType;
+				return Dummy.NestedTypeDefinition;
 			}
 		}
-		private static INestedTypeDefinition 		/*?*/nestedType;
+
+		public static INestedTypeDefinition NestedTypeDefinition {
+			get {
+				Contract.Ensures(Contract.Result<INestedTypeDefinition>() != null);
+				if (Dummy.nestedTypeDefinition == null)
+					Interlocked.CompareExchange(ref Dummy.nestedTypeDefinition, new DummyNestedType(), null);
+				return Dummy.nestedTypeDefinition;
+			}
+		}
+		private static INestedTypeDefinition 		/*?*/nestedTypeDefinition;
+
+		public static INestedTypeReference NestedTypeReference {
+			get {
+				Contract.Ensures(Contract.Result<INestedTypeReference>() != null);
+				if (Dummy.nestedTypeReference == null)
+					Interlocked.CompareExchange(ref Dummy.nestedTypeReference, new DummyNestedType(), null);
+				return Dummy.nestedTypeReference;
+			}
+		}
+		private static INestedTypeDefinition 		/*?*/nestedTypeReference;
+
+		public static INestedUnitNamespace NestedUnitNamespace {
+			get {
+				Contract.Ensures(Contract.Result<INestedUnitNamespace>() != null);
+				if (Dummy.nestedUnitNamespace == null)
+					Interlocked.CompareExchange(ref Dummy.nestedUnitNamespace, new DummyNestedUnitNamespace(), null);
+				return Dummy.nestedUnitNamespace;
+			}
+		}
+		private static INestedUnitNamespace 		/*?*/nestedUnitNamespace;
 
 		public static IPlatformType PlatformType {
 			get {
@@ -233,42 +295,19 @@ namespace Microsoft.Cci
 		public static IPropertyDefinition Property {
 			get {
 				Contract.Ensures(Contract.Result<IPropertyDefinition>() != null);
-				if (Dummy.property == null)
-					Interlocked.CompareExchange(ref Dummy.property, new DummyPropertyDefinition(), null);
-				return Dummy.property;
+				return Dummy.PropertyDefinition;
 			}
 		}
-		private static IPropertyDefinition 		/*?*/property;
 
-		public static ITypeDefinition Type {
+		public static IPropertyDefinition PropertyDefinition {
 			get {
-				Contract.Ensures(Contract.Result<ITypeDefinition>() != null);
-				if (Dummy.type == null)
-					Interlocked.CompareExchange(ref Dummy.type, new DummyType(), null);
-				return Dummy.type;
+				Contract.Ensures(Contract.Result<IPropertyDefinition>() != null);
+				if (Dummy.propertyDefinition == null)
+					Interlocked.CompareExchange(ref Dummy.propertyDefinition, new DummyPropertyDefinition(), null);
+				return Dummy.propertyDefinition;
 			}
 		}
-		private static ITypeDefinition 		/*?*/type;
-
-		public static ITypeReference TypeReference {
-			get {
-				Contract.Ensures(Contract.Result<ITypeReference>() != null);
-				if (Dummy.typeReference == null)
-					Interlocked.CompareExchange(ref Dummy.typeReference, new DummyTypeReference(), null);
-				return Dummy.typeReference;
-			}
-		}
-		private static ITypeReference 		/*?*/typeReference;
-
-		public static IUnit Unit {
-			get {
-				Contract.Ensures(Contract.Result<IUnit>() != null);
-				if (Dummy.unit == null)
-					Interlocked.CompareExchange(ref Dummy.unit, new DummyUnit(), null);
-				return Dummy.unit;
-			}
-		}
-		private static IUnit 		/*?*/unit;
+		private static IPropertyDefinition 		/*?*/propertyDefinition;
 
 		public static IRootUnitNamespace RootUnitNamespace {
 			get {
@@ -280,15 +319,82 @@ namespace Microsoft.Cci
 		}
 		private static IRootUnitNamespace 		/*?*/rootUnitNamespace;
 
-		public static INestedUnitNamespace NestedUnitNamespace {
+		public static ITypeDefinition Type {
 			get {
-				Contract.Ensures(Contract.Result<INestedUnitNamespace>() != null);
-				if (Dummy.nestedUnitNamespace == null)
-					Interlocked.CompareExchange(ref Dummy.nestedUnitNamespace, new DummyNestedUnitNamespace(), null);
-				return Dummy.nestedUnitNamespace;
+				Contract.Ensures(Contract.Result<ITypeDefinition>() != null);
+				if (Dummy.type == null)
+					Interlocked.CompareExchange(ref Dummy.type, new DummyNamespaceTypeDefinition(), null);
+				return Dummy.type;
 			}
 		}
-		private static INestedUnitNamespace 		/*?*/nestedUnitNamespace;
+		private static ITypeDefinition 		/*?*/type;
+
+		public static ITypeDefinition TypeDefinition {
+			get {
+				Contract.Ensures(Contract.Result<ITypeDefinition>() != null);
+				return Dummy.Type;
+			}
+		}
+
+		public static ITypeReference TypeReference {
+			get {
+				Contract.Ensures(Contract.Result<ITypeReference>() != null);
+				if (Dummy.typeReference == null)
+					Interlocked.CompareExchange(ref Dummy.typeReference, new DummyNamespaceTypeReference(), null);
+				return Dummy.typeReference;
+			}
+		}
+		private static ITypeReference 		/*?*/typeReference;
+
+		public static IUnit Unit {
+			get {
+				Contract.Ensures(Contract.Result<IUnit>() != null);
+				if (Dummy.unit == null)
+					Interlocked.CompareExchange(ref Dummy.unit, new DummyModule(), null);
+				return Dummy.unit;
+			}
+		}
+		private static IUnit 		/*?*/unit;
+
+		public static UnitIdentity UnitIdentity {
+			get {
+				Contract.Ensures(Contract.Result<UnitIdentity>() != null);
+				if (Dummy.unitIdentity == null)
+					Interlocked.CompareExchange(ref Dummy.unitIdentity, new ModuleIdentity(Dummy.Name, ""), null);
+				return Dummy.unitIdentity;
+			}
+		}
+		private static UnitIdentity 		/*?*/unitIdentity;
+
+		public static IUnitNamespace UnitNamespace {
+			get {
+				Contract.Ensures(Contract.Result<IUnitNamespace>() != null);
+				if (Dummy.unitNamespace == null)
+					Interlocked.CompareExchange(ref Dummy.unitNamespace, new DummyRootUnitNamespace(), null);
+				return Dummy.unitNamespace;
+			}
+		}
+		private static IUnitNamespace 		/*?*/unitNamespace;
+
+		public static IUnitNamespaceReference UnitNamespaceReference {
+			get {
+				Contract.Ensures(Contract.Result<IUnitNamespaceReference>() != null);
+				if (Dummy.unitNamespaceReference == null)
+					Interlocked.CompareExchange(ref Dummy.unitNamespaceReference, new DummyRootUnitNamespace(), null);
+				return Dummy.unitNamespaceReference;
+			}
+		}
+		private static IUnitNamespaceReference 		/*?*/unitNamespaceReference;
+
+		public static IUnitReference UnitReference {
+			get {
+				Contract.Ensures(Contract.Result<IUnitReference>() != null);
+				if (Dummy.unitReference == null)
+					Interlocked.CompareExchange(ref Dummy.unitReference, new DummyModuleReference(), null);
+				return Dummy.unitReference;
+			}
+		}
+		private static IUnitReference 		/*?*/unitReference;
 
 		public static IUnitSet UnitSet {
 			get {
@@ -299,6 +405,16 @@ namespace Microsoft.Cci
 			}
 		}
 		private static IUnitSet 		/*?*/unitSet;
+
+		public static IUnitSetNamespace UnitSetNamespace {
+			get {
+				Contract.Ensures(Contract.Result<IUnitSetNamespace>() != null);
+				if (Dummy.unitSetNamespace == null)
+					Interlocked.CompareExchange(ref Dummy.unitSetNamespace, new DummyRootUnitSetNamespace(), null);
+				return Dummy.unitSetNamespace;
+			}
+		}
+		private static IUnitSetNamespace 		/*?*/unitSetNamespace;
 
 		public static IRootUnitSetNamespace RootUnitSetNamespace {
 			get {
@@ -320,15 +436,15 @@ namespace Microsoft.Cci
 		}
 		private static IModule 		/*?*/module;
 
-		public static IAssembly Assembly {
+		public static ModuleIdentity ModuleIdentity {
 			get {
-				Contract.Ensures(Contract.Result<IAssembly>() != null);
-				if (Dummy.assembly == null)
-					Interlocked.CompareExchange(ref Dummy.assembly, new DummyAssembly(), null);
-				return Dummy.assembly;
+				Contract.Ensures(Contract.Result<ModuleIdentity>() != null);
+				if (Dummy.moduleIdentity == null)
+					Interlocked.CompareExchange(ref Dummy.moduleIdentity, new ModuleIdentity(Dummy.Name, ""), null);
+				return Dummy.moduleIdentity;
 			}
 		}
-		private static IAssembly 		/*?*/assembly;
+		static ModuleIdentity moduleIdentity;
 
 		public static IMethodReference MethodReference {
 			get {
@@ -410,16 +526,6 @@ namespace Microsoft.Cci
 		}
 		private static IMarshallingInformation 		/*?*/marshallingInformation;
 
-		public static ISecurityAttribute SecurityAttribute {
-			get {
-				Contract.Ensures(Contract.Result<ISecurityAttribute>() != null);
-				if (Dummy.securityAttribute == null)
-					Interlocked.CompareExchange(ref Dummy.securityAttribute, new DummySecurityAttribute(), null);
-				return Dummy.securityAttribute;
-			}
-		}
-		private static ISecurityAttribute 		/*?*/securityAttribute;
-
 		public static IParameterTypeInformation ParameterTypeInformation {
 			get {
 				Contract.Ensures(Contract.Result<IParameterTypeInformation>() != null);
@@ -429,6 +535,36 @@ namespace Microsoft.Cci
 			}
 		}
 		private static IParameterTypeInformation 		/*?*/parameterTypeInformation;
+
+		public static INamedTypeDefinition NamedTypeDefinition {
+			get {
+				Contract.Ensures(Contract.Result<INamedTypeDefinition>() != null);
+				if (Dummy.namedTypeDefinition == null)
+					Interlocked.CompareExchange(ref Dummy.namedTypeDefinition, new DummyNamespaceTypeDefinition(), null);
+				return Dummy.namedTypeDefinition;
+			}
+		}
+		private static INamedTypeDefinition 		/*?*/namedTypeDefinition;
+
+		public static INamespaceDefinition NamespaceDefinition {
+			get {
+				Contract.Ensures(Contract.Result<INamespaceDefinition>() != null);
+				if (Dummy.namespaceDefinition == null)
+					Interlocked.CompareExchange(ref Dummy.namespaceDefinition, new DummyRootUnitNamespace(), null);
+				return Dummy.namespaceDefinition;
+			}
+		}
+		private static INamespaceDefinition 		/*?*/namespaceDefinition;
+
+		public static INamespaceRootOwner NamespaceRootOwner {
+			get {
+				Contract.Ensures(Contract.Result<INamespaceRootOwner>() != null);
+				if (Dummy.namespaceRootOwner == null)
+					Interlocked.CompareExchange(ref Dummy.namespaceRootOwner, new DummyModule(), null);
+				return Dummy.namespaceRootOwner;
+			}
+		}
+		private static INamespaceRootOwner 		/*?*/namespaceRootOwner;
 
 		public static INamespaceTypeDefinition NamespaceTypeDefinition {
 			get {
@@ -449,6 +585,36 @@ namespace Microsoft.Cci
 			}
 		}
 		private static INamespaceTypeReference 		/*?*/namespaceTypeReference;
+
+		public static ISectionBlock SectionBlock {
+			get {
+				Contract.Ensures(Contract.Result<ISectionBlock>() != null);
+				if (Dummy.sectionBlock == null)
+					Interlocked.CompareExchange(ref Dummy.sectionBlock, new DummySectionBlock(), null);
+				return Dummy.sectionBlock;
+			}
+		}
+		private static ISectionBlock 		/*?*/sectionBlock;
+
+		public static ISecurityAttribute SecurityAttribute {
+			get {
+				Contract.Ensures(Contract.Result<ISecurityAttribute>() != null);
+				if (Dummy.securityAttribute == null)
+					Interlocked.CompareExchange(ref Dummy.securityAttribute, new DummySecurityAttribute(), null);
+				return Dummy.securityAttribute;
+			}
+		}
+		private static ISecurityAttribute 		/*?*/securityAttribute;
+
+		public static ISignature Signature {
+			get {
+				Contract.Ensures(Contract.Result<ISignature>() != null);
+				if (Dummy.signature == null)
+					Interlocked.CompareExchange(ref Dummy.signature, new DummyMethodDefinition(), null);
+				return Dummy.signature;
+			}
+		}
+		private static ISignature 		/*?*/signature;
 
 		public static ISpecializedNestedTypeDefinition SpecializedNestedTypeDefinition {
 			get {
@@ -519,16 +685,6 @@ namespace Microsoft.Cci
 			}
 		}
 		private static IParameterDefinition 		/*?*/parameterDefinition;
-
-		public static ISectionBlock SectionBlock {
-			get {
-				Contract.Ensures(Contract.Result<ISectionBlock>() != null);
-				if (Dummy.sectionBlock == null)
-					Interlocked.CompareExchange(ref Dummy.sectionBlock, new DummySectionBlock(), null);
-				return Dummy.sectionBlock;
-			}
-		}
-		private static ISectionBlock 		/*?*/sectionBlock;
 
 		public static IPlatformInvokeInformation PlatformInvokeInformation {
 			get {
@@ -619,10 +775,20 @@ namespace Microsoft.Cci
 			}
 		}
 		private static IArrayType 		/*?*/arrayType;
+
+		public static ITypeDefinitionMember TypeDefinitionMember {
+			get {
+				Contract.Ensures(Contract.Result<ITypeDefinitionMember>() != null);
+				if (Dummy.typeDefinitionMember == null)
+					Interlocked.CompareExchange(ref Dummy.typeDefinitionMember, new DummyFieldDefinition(), null);
+				return Dummy.typeDefinitionMember;
+			}
+		}
+		private static ITypeDefinitionMember 		/*?*/typeDefinitionMember;
 	}
 
 	[ContractVerification(false)]
-	public sealed class DummyAliasForType : Dummy, IAliasForType
+	public sealed class DummyNamespaceAliasForType : Dummy, INamespaceAliasForType
 	{
 		#region IAliasForType Members
 
@@ -648,10 +814,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public IEnumerable<ILocation> Locations {
@@ -683,6 +851,42 @@ namespace Microsoft.Cci
 		}
 
 		#endregion
+
+		#region INamespaceAliasForType Members
+
+		public bool IsPublic {
+			get { return false; }
+		}
+
+		#endregion
+
+		#region INamespaceMember Members
+
+		public INamespaceDefinition ContainingNamespace {
+			get { return Dummy.NamespaceDefinition; }
+		}
+
+		#endregion
+
+		#region IContainerMember<INamespaceDefinition> Members
+
+		public INamespaceDefinition Container {
+			get { return Dummy.NamespaceDefinition; }
+		}
+
+		public new IName Name {
+			get { return Dummy.Name; }
+		}
+
+		#endregion
+
+		#region IScopeMember<IScope<INamespaceMember>> Members
+
+		public IScope<INamespaceMember> ContainingScope {
+			get { return this.Container; }
+		}
+
+		#endregion
 	}
 
 	[ContractVerification(false)]
@@ -695,11 +899,11 @@ namespace Microsoft.Cci
 		}
 
 		public AssemblyIdentity ContractAssemblySymbolicIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		public AssemblyIdentity CoreAssemblySymbolicIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		public string Culture {
@@ -742,8 +946,8 @@ namespace Microsoft.Cci
 			get { return Dummy.Version; }
 		}
 
-		public AssemblyIdentity AssemblyIdentity {
-			get { return new AssemblyIdentity(Dummy.Name, string.Empty, Dummy.Version, new byte[0], string.Empty); }
+		public new AssemblyIdentity AssemblyIdentity {
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		#endregion
@@ -898,8 +1102,8 @@ namespace Microsoft.Cci
 			return Enumerable<ITypeMemberReference>.Empty;
 		}
 
-		public ModuleIdentity ModuleIdentity {
-			get { return this.AssemblyIdentity; }
+		public new ModuleIdentity ModuleIdentity {
+			get { return Dummy.ModuleIdentity; }
 		}
 
 		#endregion
@@ -923,7 +1127,6 @@ namespace Microsoft.Cci
 		}
 
 		public IRootUnitNamespace UnitNamespaceRoot {
-//^ assume false;
 			get { return Dummy.RootUnitNamespace; }
 		}
 
@@ -931,8 +1134,8 @@ namespace Microsoft.Cci
 			get { return Enumerable<IUnitReference>.Empty; }
 		}
 
-		public UnitIdentity UnitIdentity {
-			get { return this.AssemblyIdentity; }
+		public new UnitIdentity UnitIdentity {
+			get { return Dummy.UnitIdentity; }
 		}
 
 		#endregion
@@ -941,10 +1144,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IAssemblyReference)this);
 		}
 
 		#endregion
@@ -952,8 +1157,7 @@ namespace Microsoft.Cci
 		#region INamespaceRootOwner Members
 
 		public INamespaceDefinition NamespaceRoot {
-//^ assume false;
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		#endregion
@@ -1029,15 +1233,15 @@ namespace Microsoft.Cci
 		public event EventHandler<ErrorEventArgs> Errors;
 
 		public AssemblyIdentity ContractAssemblySymbolicIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		public AssemblyIdentity CoreAssemblySymbolicIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		public AssemblyIdentity SystemCoreAssemblySymbolicIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		public IAssembly FindAssembly(AssemblyIdentity assemblyIdentity)
@@ -1153,10 +1357,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public IEnumerable<ILocation> Locations {
@@ -1261,7 +1467,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -1277,7 +1483,7 @@ namespace Microsoft.Cci
 		}
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return Dummy.Event; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -1285,7 +1491,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		public ITypeDefinition Container {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		#endregion
@@ -1310,10 +1516,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		#endregion
@@ -1321,7 +1529,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		public IScope<ITypeDefinitionMember> ContainingScope {
-			get { return Dummy.Type; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -1347,10 +1555,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		#endregion
@@ -1444,7 +1654,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -1456,7 +1666,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		public ITypeDefinition Container {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		#endregion
@@ -1481,10 +1691,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IFieldReference)this);
 		}
 
 		#endregion
@@ -1492,7 +1704,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		public IScope<ITypeDefinitionMember> ContainingScope {
-			get { return Dummy.Type; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -1570,7 +1782,6 @@ namespace Microsoft.Cci
 		}
 
 		public INamedTypeReference GenericType {
-//^ assume false;
 			get { return Dummy.NamedTypeReference; }
 		}
 
@@ -1624,7 +1835,7 @@ namespace Microsoft.Cci
 		}
 
 		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
+			get { return Dummy.GenericTypeInstanceReference; }
 		}
 
 		public bool IsAbstract {
@@ -1774,10 +1985,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IGenericTypeInstanceReference)this);
 		}
 
 		public bool IsAlias {
@@ -1806,7 +2019,7 @@ namespace Microsoft.Cci
 		#region IGenericTypeParameter Members
 
 		public ITypeDefinition DefiningType {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public IEnumerable<ILocation> Locations {
@@ -1883,7 +2096,7 @@ namespace Microsoft.Cci
 		}
 
 		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
+			get { return Dummy.GenericTypeInstanceReference; }
 		}
 
 		public IEnumerable<ITypeReference> Interfaces {
@@ -2004,10 +2217,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IGenericTypeParameterReference)this);
 		}
 
 		#endregion
@@ -2103,8 +2318,7 @@ namespace Microsoft.Cci
 		#region IGenericMethodParameter Members
 
 		public IMethodDefinition DefiningMethod {
-//^ assume false; //TODO; need a dummy generic method
-			get { return Dummy.Method; }
+			get { return Dummy.MethodDefinition; }
 		}
 
 		public IEnumerable<ILocation> Locations {
@@ -2181,7 +2395,7 @@ namespace Microsoft.Cci
 		}
 
 		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
+			get { return Dummy.GenericTypeInstanceReference; }
 		}
 
 		public IEnumerable<ITypeReference> Interfaces {
@@ -2302,10 +2516,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IGenericMethodParameterReference)this);
 		}
 
 		#endregion
@@ -2401,13 +2617,9 @@ namespace Microsoft.Cci
 
 		#region IMethodBody Members
 
-		public IMethodDefinition MethodDefinition {
-			get { return Dummy.Method; }
+		public new IMethodDefinition MethodDefinition {
+			get { return Dummy.MethodDefinition; }
 		}
-
-		//public IBlockStatement Block {
-		//  get { return Dummy.Block; }
-		//}
 
 		//public IOperation GetOperationAt(int offset, out int offsetOfNextOperation) {
 		//  offsetOfNextOperation = -1;
@@ -2444,10 +2656,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		#endregion
@@ -2646,7 +2860,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -2658,7 +2872,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		public ITypeDefinition Container {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		#endregion
@@ -2683,10 +2897,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IMethodReference)this);
 		}
 
 		#endregion
@@ -2694,7 +2910,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		public IScope<ITypeDefinitionMember> ContainingScope {
-			get { return Dummy.Type; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -2755,7 +2971,6 @@ namespace Microsoft.Cci
 		}
 
 		public ushort GenericParameterCount {
-//^ assume false;
 			get { return 0; }
 		}
 
@@ -2776,8 +2991,7 @@ namespace Microsoft.Cci
 		}
 
 		public IMethodDefinition ResolvedMethod {
-//^ assume false;
-			get { return Dummy.Method; }
+			get { return Dummy.MethodDefinition; }
 		}
 
 		public IEnumerable<IParameterTypeInformation> ExtraParameters {
@@ -2821,7 +3035,7 @@ namespace Microsoft.Cci
 		}
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return Dummy.Method; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -2838,10 +3052,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		#endregion
@@ -2877,11 +3093,11 @@ namespace Microsoft.Cci
 		}
 
 		public AssemblyIdentity ContractAssemblySymbolicIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		public AssemblyIdentity CoreAssemblySymbolicIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		public string DebugInformationLocation {
@@ -3016,8 +3232,8 @@ namespace Microsoft.Cci
 			return Enumerable<ITypeMemberReference>.Empty;
 		}
 
-		public ModuleIdentity ModuleIdentity {
-			get { return new ModuleIdentity(Dummy.Name, this.Location); }
+		public new ModuleIdentity ModuleIdentity {
+			get { return Dummy.ModuleIdentity; }
 		}
 
 		#endregion
@@ -3041,7 +3257,6 @@ namespace Microsoft.Cci
 		}
 
 		public IRootUnitNamespace UnitNamespaceRoot {
-//^ assume false;
 			get { return Dummy.RootUnitNamespace; }
 		}
 
@@ -3049,8 +3264,8 @@ namespace Microsoft.Cci
 			get { return Enumerable<IUnitReference>.Empty; }
 		}
 
-		public UnitIdentity UnitIdentity {
-			get { return this.ModuleIdentity; }
+		public new UnitIdentity UnitIdentity {
+			get { return Dummy.UnitIdentity; }
 		}
 
 		#endregion
@@ -3059,10 +3274,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IModuleReference)this);
 		}
 
 		#endregion
@@ -3070,8 +3287,7 @@ namespace Microsoft.Cci
 		#region INamespaceRootOwner Members
 
 		public INamespaceDefinition NamespaceRoot {
-//^ assume false;
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		#endregion
@@ -3079,7 +3295,7 @@ namespace Microsoft.Cci
 		#region IUnitReference Members
 
 		public IUnit ResolvedUnit {
-			get { return this; }
+			get { return Dummy.Unit; }
 		}
 
 		#endregion
@@ -3103,7 +3319,7 @@ namespace Microsoft.Cci
 		}
 
 		public IModule ResolvedModule {
-			get { return this; }
+			get { return Dummy.Module; }
 		}
 
 		#endregion
@@ -3155,8 +3371,8 @@ namespace Microsoft.Cci
 
 		#region IModuleReference Members
 
-		public ModuleIdentity ModuleIdentity {
-			get { return Dummy.Module.ModuleIdentity; }
+		public new ModuleIdentity ModuleIdentity {
+			get { return Dummy.ModuleIdentity; }
 		}
 
 		#endregion
@@ -3165,14 +3381,16 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
-		public UnitIdentity UnitIdentity {
-			get { return this.ModuleIdentity; }
+		public new UnitIdentity UnitIdentity {
+			get { return Dummy.UnitIdentity; }
 		}
 
 		#endregion
@@ -3218,7 +3436,7 @@ namespace Microsoft.Cci
 		}
 
 		public object ResolvedDefinition {
-			get { return Dummy.Property; }
+			get { return Dummy.PropertyDefinition; }
 		}
 
 		#endregion
@@ -3227,10 +3445,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public IEnumerable<ILocation> Locations {
@@ -3245,272 +3465,12 @@ namespace Microsoft.Cci
 	}
 
 	[ContractVerification(false)]
-	public sealed class DummyNamedTypeDefinition : Dummy, INamedTypeDefinition
-	{
-
-		#region ITypeDefinition Members
-
-		public ushort Alignment {
-			get { return 0; }
-		}
-
-		public IEnumerable<ITypeReference> BaseClasses {
-			get { return Enumerable<ITypeReference>.Empty; }
-		}
-
-		public IEnumerable<IEventDefinition> Events {
-			get { return Enumerable<IEventDefinition>.Empty; }
-		}
-
-		public IEnumerable<IFieldDefinition> Fields {
-			get { return Enumerable<IFieldDefinition>.Empty; }
-		}
-
-		public IEnumerable<IMethodDefinition> Methods {
-			get { return Enumerable<IMethodDefinition>.Empty; }
-		}
-
-		public IEnumerable<INestedTypeDefinition> NestedTypes {
-			get { return Enumerable<INestedTypeDefinition>.Empty; }
-		}
-
-		public IEnumerable<IPropertyDefinition> Properties {
-			get { return Enumerable<IPropertyDefinition>.Empty; }
-		}
-
-		public IEnumerable<IMethodImplementation> ExplicitImplementationOverrides {
-			get { return Enumerable<IMethodImplementation>.Empty; }
-		}
-
-		public IEnumerable<IGenericTypeParameter> GenericParameters {
-			get { return Enumerable<IGenericTypeParameter>.Empty; }
-		}
-
-		public ushort GenericParameterCount {
-//^ assume false;
-			get { return 0; }
-		}
-
-		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
-		}
-
-		public IEnumerable<ITypeReference> Interfaces {
-			get { return Enumerable<ITypeReference>.Empty; }
-		}
-
-		public bool IsAbstract {
-			get { return false; }
-		}
-
-		public bool IsClass {
-			get { return false; }
-		}
-
-		public bool IsDelegate {
-			get { return false; }
-		}
-
-		public bool IsEnum {
-			get { return false; }
-		}
-
-		public bool IsGeneric {
-			get { return false; }
-		}
-
-		public bool IsInterface {
-			get { return false; }
-		}
-
-		public bool IsReferenceType {
-			get { return false; }
-		}
-
-		public bool IsSealed {
-			get { return true; }
-		}
-
-		public bool IsStatic {
-			get { return true; }
-		}
-
-		public bool IsValueType {
-			get { return false; }
-		}
-
-		public bool IsStruct {
-			get { return false; }
-		}
-
-		public IEnumerable<ITypeDefinitionMember> Members {
-			get { return Enumerable<ITypeDefinitionMember>.Empty; }
-		}
-
-		public new IPlatformType PlatformType {
-			get { return Dummy.PlatformType; }
-		}
-
-		public IEnumerable<ITypeDefinitionMember> PrivateHelperMembers {
-			get { return this.Members; }
-		}
-
-		public uint SizeOf {
-			get { return 0; }
-		}
-
-		public IEnumerable<ISecurityAttribute> SecurityAttributes {
-			get { return Enumerable<ISecurityAttribute>.Empty; }
-		}
-
-		public ITypeReference UnderlyingType {
-			get { return Dummy.TypeReference; }
-		}
-
-		public PrimitiveTypeCode TypeCode {
-			get { return PrimitiveTypeCode.Invalid; }
-		}
-
-		public IEnumerable<ILocation> Locations {
-			get { return Enumerable<ILocation>.Empty; }
-		}
-
-		public LayoutKind Layout {
-			get { return LayoutKind.Auto; }
-		}
-
-		public bool IsSpecialName {
-			get { return false; }
-		}
-
-		public bool IsComObject {
-			get { return false; }
-		}
-
-		public bool IsSerializable {
-			get { return false; }
-		}
-
-		public bool IsBeforeFieldInit {
-			get { return false; }
-		}
-
-		public StringFormatKind StringFormat {
-			get { return StringFormatKind.Ansi; }
-		}
-
-		public bool IsRuntimeSpecial {
-			get { return false; }
-		}
-
-		public bool HasDeclarativeSecurity {
-			get { return false; }
-		}
-
-		#endregion
-
-		#region IDefinition Members
-
-		public IEnumerable<ICustomAttribute> Attributes {
-			get { return Enumerable<ICustomAttribute>.Empty; }
-		}
-
-		public void Dispatch(IMetadataVisitor visitor)
-		{
-		}
-
-		public void DispatchAsReference(IMetadataVisitor visitor)
-		{
-		}
-
-		#endregion
-
-		#region IScope<ITypeDefinitionMember> Members
-
-		public bool Contains(ITypeDefinitionMember member)
-		{
-			return false;
-		}
-
-		public IEnumerable<ITypeDefinitionMember> GetMatchingMembersNamed(IName name, bool ignoreCase, Function<ITypeDefinitionMember, bool> predicate)
-		{
-			return Enumerable<ITypeDefinitionMember>.Empty;
-		}
-
-		public IEnumerable<ITypeDefinitionMember> GetMatchingMembers(Function<ITypeDefinitionMember, bool> predicate)
-		{
-			return Enumerable<ITypeDefinitionMember>.Empty;
-		}
-
-		public IEnumerable<ITypeDefinitionMember> GetMembersNamed(IName name, bool ignoreCase)
-		{
-			return Enumerable<ITypeDefinitionMember>.Empty;
-		}
-
-		#endregion
-
-		#region INamedEntity Members
-
-		public new IName Name {
-			get { return Dummy.Name; }
-		}
-
-		#endregion
-
-		#region ITypeReference Members
-
-		public bool IsAlias {
-			get { return false; }
-		}
-
-		public new IAliasForType AliasForType {
-			get { return Dummy.AliasForType; }
-		}
-
-		ITypeDefinition ITypeReference.ResolvedType {
-			get { return this; }
-		}
-
-
-		public uint InternedKey {
-			get { return 0; }
-		}
-
-		#endregion
-
-		#region INamedTypeReference Members
-
-		public bool MangleName {
-			get { return false; }
-		}
-
-		public INamedTypeDefinition ResolvedType {
-			get { return this; }
-		}
-
-		#endregion
-
-		#region INamedTypeDefinition Members
-
-		public IEnumerable<ICustomAttribute> AttributesFor(ITypeReference implementedInterface)
-		{
-			return Enumerable<ICustomAttribute>.Empty;
-		}
-
-		public bool IsForeignObject {
-			get { return false; }
-		}
-
-		#endregion
-	}
-
-	[ContractVerification(false)]
 	public sealed class DummyNamespaceTypeDefinition : Dummy, INamespaceTypeDefinition
 	{
 		#region INamespaceTypeDefinition Members
 
 		public IUnitNamespace ContainingUnitNamespace {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.UnitNamespace; }
 		}
 
 		public bool IsPublic {
@@ -3563,7 +3523,7 @@ namespace Microsoft.Cci
 		}
 
 		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
+			get { return Dummy.GenericTypeInstanceReference; }
 		}
 
 		public IEnumerable<ITypeReference> Interfaces {
@@ -3715,15 +3675,17 @@ namespace Microsoft.Cci
 		#region INamespaceMember Members
 
 		public INamespaceDefinition ContainingNamespace {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((INamespaceTypeReference)this);
 		}
 
 		#endregion
@@ -3731,7 +3693,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<INamespaceDefinition> Members
 
 		public INamespaceDefinition Container {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		#endregion
@@ -3747,7 +3709,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<INamespaceMember>> Members
 
 		public IScope<INamespaceMember> ContainingScope {
-			get { return Dummy.RootUnitNamespace; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -3816,94 +3778,6 @@ namespace Microsoft.Cci
 	}
 
 	[ContractVerification(false)]
-	public sealed class DummyNamedTypeReference : Dummy, INamedTypeReference
-	{
-
-		#region ITypeReference Members
-
-		public new IAliasForType AliasForType {
-			get { return Dummy.AliasForType; }
-		}
-
-		ITypeDefinition ITypeReference.ResolvedType {
-//^ assume false;
-			get { return Dummy.Type; }
-		}
-
-		public PrimitiveTypeCode TypeCode {
-			get { return PrimitiveTypeCode.Invalid; }
-		}
-
-		public uint InternedKey {
-			get { return 0; }
-		}
-
-		public bool IsAlias {
-			get { return false; }
-		}
-
-		public bool IsEnum {
-			get { return false; }
-		}
-
-		public bool IsValueType {
-			get { return false; }
-		}
-
-		public new IPlatformType PlatformType {
-			get { return Dummy.PlatformType; }
-		}
-
-		#endregion
-
-		#region IReference Members
-
-		public IEnumerable<ICustomAttribute> Attributes {
-			get { return this.attributes; }
-		}
-		IEnumerable<ICustomAttribute> attributes = Enumerable<ICustomAttribute>.Empty;
-
-		public void Dispatch(IMetadataVisitor visitor)
-		{
-		}
-
-		public void DispatchAsReference(IMetadataVisitor visitor)
-		{
-		}
-
-		public IEnumerable<ILocation> Locations {
-			get { return this.locations; }
-		}
-		IEnumerable<ILocation> locations = Enumerable<ILocation>.Empty;
-
-		#endregion
-
-		#region INamedEntity Members
-
-		public new IName Name {
-			get { return Dummy.Name; }
-		}
-
-		#endregion
-
-		#region INamedTypeReference Members
-
-		public bool MangleName {
-			get { return false; }
-		}
-
-		public INamedTypeDefinition ResolvedType {
-			get { return Dummy.NamedTypeDefinition; }
-		}
-
-		public ushort GenericParameterCount {
-			get { return 0; }
-		}
-
-		#endregion
-	}
-
-	[ContractVerification(false)]
 	public sealed class DummyNamespaceTypeReference : Dummy, INamespaceTypeReference
 	{
 
@@ -3914,7 +3788,7 @@ namespace Microsoft.Cci
 		}
 
 		public IUnitNamespaceReference ContainingUnitNamespace {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.UnitNamespaceReference; }
 		}
 
 		INamespaceTypeDefinition INamespaceTypeReference.ResolvedType {
@@ -3934,8 +3808,7 @@ namespace Microsoft.Cci
 		}
 
 		ITypeDefinition ITypeReference.ResolvedType {
-//^ assume false;
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public PrimitiveTypeCode TypeCode {
@@ -3972,10 +3845,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public IEnumerable<ILocation> Locations {
@@ -3999,7 +3874,7 @@ namespace Microsoft.Cci
 		}
 
 		public INamedTypeDefinition ResolvedType {
-			get { return Dummy.NamespaceTypeDefinition; }
+			get { return Dummy.NamedTypeDefinition; }
 		}
 
 		#endregion
@@ -4078,7 +3953,6 @@ namespace Microsoft.Cci
 		[Pure()]
 		public IName GetNameFor(string name)
 		{
-			//^ assume false;
 			return Dummy.Name;
 		}
 
@@ -4569,10 +4443,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((INestedTypeReference)this);
 		}
 
 		public IEnumerable<IMethodImplementation> ExplicitImplementationOverrides {
@@ -4584,12 +4460,11 @@ namespace Microsoft.Cci
 		}
 
 		public ushort GenericParameterCount {
-//^ assume false;
 			get { return 0; }
 		}
 
 		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
+			get { return Dummy.GenericTypeInstanceReference; }
 		}
 
 		public IEnumerable<ITypeReference> Interfaces {
@@ -4741,7 +4616,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -4785,7 +4660,7 @@ namespace Microsoft.Cci
 		}
 
 		ITypeDefinition ITypeReference.ResolvedType {
-			get { return this; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public uint InternedKey {
@@ -4812,7 +4687,7 @@ namespace Microsoft.Cci
 		#region ITypeMemberReference Members
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return this; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -4825,6 +4700,117 @@ namespace Microsoft.Cci
 
 		public INamedTypeDefinition ResolvedType {
 			get { return this; }
+		}
+
+		#endregion
+	}
+
+	[ContractVerification(false)]
+	public sealed class DummyNestedTypeReference : Dummy, INestedTypeReference
+	{
+		#region INestedTypeReference Members
+
+		public ushort GenericParameterCount {
+			get { return 0; }
+		}
+
+		public INestedTypeDefinition ResolvedType {
+			get { return Dummy.NestedTypeDefinition; }
+		}
+
+		#endregion
+
+		#region INamedTypeReference Members
+
+
+		public bool MangleName {
+			get { return false; }
+		}
+
+		INamedTypeDefinition INamedTypeReference.ResolvedType {
+			get { return Dummy.NamedTypeDefinition; }
+		}
+
+		#endregion
+
+		#region ITypeReference Members
+
+		public new IAliasForType AliasForType {
+			get { return Dummy.AliasForType; }
+		}
+
+		public uint InternedKey {
+			get { return 0; }
+		}
+
+		public bool IsAlias {
+			get { return false; }
+		}
+
+		public bool IsEnum {
+			get { return false; }
+		}
+
+		public bool IsValueType {
+			get { return false; }
+		}
+
+		public new IPlatformType PlatformType {
+			get { return Dummy.PlatformType; }
+		}
+
+		ITypeDefinition ITypeReference.ResolvedType {
+			get { return Dummy.TypeDefinition; }
+		}
+
+		public PrimitiveTypeCode TypeCode {
+			get { return PrimitiveTypeCode.Invalid; }
+		}
+
+		#endregion
+
+		#region IReference Members
+
+		public IEnumerable<ICustomAttribute> Attributes {
+			get { return Enumerable<ICustomAttribute>.Empty; }
+		}
+
+		public void Dispatch(IMetadataVisitor visitor)
+		{
+			visitor.Visit(this);
+		}
+
+		public void DispatchAsReference(IMetadataVisitor visitor)
+		{
+			visitor.Visit(this);
+		}
+
+		#endregion
+
+		#region IObjectWithLocations Members
+
+		public IEnumerable<ILocation> Locations {
+			get { return Enumerable<ILocation>.Empty; }
+		}
+
+		#endregion
+
+		#region INamedEntity Members
+
+		public new IName Name {
+			get { return Dummy.Name; }
+		}
+
+		#endregion
+
+		#region ITypeMemberReference Members
+
+		public ITypeReference ContainingType {
+			get { return Dummy.TypeReference; }
+		}
+
+		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -5197,7 +5183,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -5213,7 +5199,7 @@ namespace Microsoft.Cci
 		}
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return Dummy.Property; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -5221,7 +5207,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		public ITypeDefinition Container {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		#endregion
@@ -5246,10 +5232,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		#endregion
@@ -5257,7 +5245,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		public IScope<ITypeDefinitionMember> ContainingScope {
-			get { return Dummy.Type; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -5275,383 +5263,6 @@ namespace Microsoft.Cci
 
 		public new IMetadataConstant Constant {
 			get { return Dummy.Constant; }
-		}
-
-		#endregion
-	}
-
-	[ContractVerification(false)]
-	public sealed class DummyType : Dummy, ITypeDefinition
-	{
-
-		#region ITypeDefinition Members
-
-		public ushort Alignment {
-			get { return 0; }
-		}
-
-		public IEnumerable<ITypeReference> BaseClasses {
-			get { return Enumerable<ITypeReference>.Empty; }
-		}
-
-		public IEnumerable<IEventDefinition> Events {
-			get { return Enumerable<IEventDefinition>.Empty; }
-		}
-
-		public IEnumerable<IFieldDefinition> Fields {
-			get { return Enumerable<IFieldDefinition>.Empty; }
-		}
-
-		public IEnumerable<IMethodDefinition> Methods {
-			get { return Enumerable<IMethodDefinition>.Empty; }
-		}
-
-		public IEnumerable<INestedTypeDefinition> NestedTypes {
-			get { return Enumerable<INestedTypeDefinition>.Empty; }
-		}
-
-		public IEnumerable<IPropertyDefinition> Properties {
-			get { return Enumerable<IPropertyDefinition>.Empty; }
-		}
-
-		public IEnumerable<IMethodImplementation> ExplicitImplementationOverrides {
-			get { return Enumerable<IMethodImplementation>.Empty; }
-		}
-
-		public IEnumerable<IGenericTypeParameter> GenericParameters {
-			get { return Enumerable<IGenericTypeParameter>.Empty; }
-		}
-
-		public ushort GenericParameterCount {
-//^ assume false;
-			get { return 0; }
-		}
-
-		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
-		}
-
-		public IEnumerable<ITypeReference> Interfaces {
-			get { return Enumerable<ITypeReference>.Empty; }
-		}
-
-		public bool IsAbstract {
-			get { return false; }
-		}
-
-		public bool IsClass {
-			get { return true; }
-		}
-
-		public bool IsDelegate {
-			get { return false; }
-		}
-
-		public bool IsEnum {
-			get { return false; }
-		}
-
-		public bool IsGeneric {
-			get { return false; }
-		}
-
-		public bool IsInterface {
-			get { return false; }
-		}
-
-		public bool IsReferenceType {
-			get { return false; }
-		}
-
-		public bool IsSealed {
-			get { return true; }
-		}
-
-		public bool IsStatic {
-			get { return true; }
-		}
-
-		public bool IsValueType {
-			get { return false; }
-		}
-
-		public bool IsStruct {
-			get { return false; }
-		}
-
-		public IEnumerable<ITypeDefinitionMember> Members {
-			get { return Enumerable<ITypeDefinitionMember>.Empty; }
-		}
-
-		public new IPlatformType PlatformType {
-			get { return Dummy.PlatformType; }
-		}
-
-		public IEnumerable<ITypeDefinitionMember> PrivateHelperMembers {
-			get { return this.Members; }
-		}
-
-		public uint SizeOf {
-			get { return 0; }
-		}
-
-		public IEnumerable<ISecurityAttribute> SecurityAttributes {
-			get { return Enumerable<ISecurityAttribute>.Empty; }
-		}
-
-		public ITypeReference UnderlyingType {
-			get { return Dummy.TypeReference; }
-		}
-
-		public PrimitiveTypeCode TypeCode {
-			get { return PrimitiveTypeCode.Invalid; }
-		}
-
-		public IEnumerable<ILocation> Locations {
-			get { return Enumerable<ILocation>.Empty; }
-		}
-
-		public LayoutKind Layout {
-			get { return LayoutKind.Auto; }
-		}
-
-		public bool IsSpecialName {
-			get { return false; }
-		}
-
-		public bool IsComObject {
-			get { return false; }
-		}
-
-		public bool IsSerializable {
-			get { return false; }
-		}
-
-		public bool IsBeforeFieldInit {
-			get { return false; }
-		}
-
-		public StringFormatKind StringFormat {
-			get { return StringFormatKind.Ansi; }
-		}
-
-		public bool IsRuntimeSpecial {
-			get { return false; }
-		}
-
-		public bool HasDeclarativeSecurity {
-			get { return false; }
-		}
-
-		#endregion
-
-		#region IDefinition Members
-
-		public IEnumerable<ICustomAttribute> Attributes {
-			get { return Enumerable<ICustomAttribute>.Empty; }
-		}
-
-		public void Dispatch(IMetadataVisitor visitor)
-		{
-		}
-
-		public void DispatchAsReference(IMetadataVisitor visitor)
-		{
-		}
-
-		#endregion
-
-		#region IScope<ITypeDefinitionMember> Members
-
-		public bool Contains(ITypeDefinitionMember member)
-		{
-			return false;
-		}
-
-		public IEnumerable<ITypeDefinitionMember> GetMatchingMembersNamed(IName name, bool ignoreCase, Function<ITypeDefinitionMember, bool> predicate)
-		{
-			return Enumerable<ITypeDefinitionMember>.Empty;
-		}
-
-		public IEnumerable<ITypeDefinitionMember> GetMatchingMembers(Function<ITypeDefinitionMember, bool> predicate)
-		{
-			return Enumerable<ITypeDefinitionMember>.Empty;
-		}
-
-		public IEnumerable<ITypeDefinitionMember> GetMembersNamed(IName name, bool ignoreCase)
-		{
-			return Enumerable<ITypeDefinitionMember>.Empty;
-		}
-
-		#endregion
-
-		#region ITypeReference Members
-
-		public bool IsAlias {
-			get { return false; }
-		}
-
-		public new IAliasForType AliasForType {
-			get { return Dummy.AliasForType; }
-		}
-
-		public ITypeDefinition ResolvedType {
-			get { return this; }
-		}
-
-		public uint InternedKey {
-			get { return 0; }
-		}
-
-		#endregion
-	}
-
-	[ContractVerification(false)]
-	public sealed class DummyTypeReference : Dummy, ITypeReference
-	{
-
-		#region ITypeReference Members
-
-		public new IAliasForType AliasForType {
-			get { return Dummy.AliasForType; }
-		}
-
-		ITypeDefinition ITypeReference.ResolvedType {
-//^ assume false;
-			get { return Dummy.Type; }
-		}
-
-		public PrimitiveTypeCode TypeCode {
-			get { return PrimitiveTypeCode.Invalid; }
-		}
-
-		public uint InternedKey {
-			get { return 0; }
-		}
-
-		public bool IsAlias {
-			get { return false; }
-		}
-
-		public bool IsEnum {
-			get { return false; }
-		}
-
-		public bool IsValueType {
-			get { return false; }
-		}
-
-		public new IPlatformType PlatformType {
-			get { return Dummy.PlatformType; }
-		}
-
-		#endregion
-
-		#region IReference Members
-
-		public IEnumerable<ICustomAttribute> Attributes {
-			get { return this.attributes; }
-		}
-		IEnumerable<ICustomAttribute> attributes = Enumerable<ICustomAttribute>.Empty;
-
-		public void Dispatch(IMetadataVisitor visitor)
-		{
-		}
-
-		public void DispatchAsReference(IMetadataVisitor visitor)
-		{
-		}
-
-		public IEnumerable<ILocation> Locations {
-			get { return this.locations; }
-		}
-		IEnumerable<ILocation> locations = Enumerable<ILocation>.Empty;
-
-		#endregion
-	}
-
-	[ContractVerification(false)]
-	public sealed class DummyUnit : Dummy, IUnit
-	{
-
-		#region IUnit Members
-
-		public AssemblyIdentity ContractAssemblySymbolicIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
-		}
-
-		public AssemblyIdentity CoreAssemblySymbolicIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
-		}
-
-		public new IPlatformType PlatformType {
-			get { return Dummy.PlatformType; }
-		}
-
-		public new string Location {
-			get { return string.Empty; }
-		}
-
-		public IEnumerable<IPESection> UninterpretedSections {
-			get { return Enumerable<IPESection>.Empty; }
-		}
-
-		public new IName Name {
-			get { return Dummy.Name; }
-		}
-
-		public IRootUnitNamespace UnitNamespaceRoot {
-//^ assume false;
-			get { return Dummy.RootUnitNamespace; }
-		}
-
-		public IEnumerable<IUnitReference> UnitReferences {
-			get { return Enumerable<IUnitReference>.Empty; }
-		}
-
-		public UnitIdentity UnitIdentity {
-			get { return new ModuleIdentity(Dummy.Name, string.Empty); }
-		}
-
-		#endregion
-
-		#region IDoubleDispatcher Members
-
-		public void Dispatch(IMetadataVisitor visitor)
-		{
-		}
-
-		public void DispatchAsReference(IMetadataVisitor visitor)
-		{
-		}
-
-		#endregion
-
-		#region INamespaceRootOwner Members
-
-		public INamespaceDefinition NamespaceRoot {
-//^ assume false;
-			get { return Dummy.RootUnitNamespace; }
-		}
-
-		#endregion
-
-		#region IUnitReference Members
-
-		public IUnit ResolvedUnit {
-			get { return Dummy.Unit; }
-		}
-
-		#endregion
-
-		#region IReference Members
-
-		public IEnumerable<ICustomAttribute> Attributes {
-			get { return Enumerable<ICustomAttribute>.Empty; }
-		}
-
-		public IEnumerable<ILocation> Locations {
-			get { return Enumerable<ILocation>.Empty; }
 		}
 
 		#endregion
@@ -5676,7 +5287,7 @@ namespace Microsoft.Cci
 		#region INamespaceDefinition Members
 
 		public INamespaceRootOwner RootOwner {
-			get { return Dummy.Unit; }
+			get { return Dummy.NamespaceRootOwner; }
 		}
 
 		public IEnumerable<INamespaceMember> Members {
@@ -5693,10 +5304,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IRootUnitNamespaceReference)this);
 		}
 
 		#endregion
@@ -5736,11 +5349,11 @@ namespace Microsoft.Cci
 		#region IUnitNamespaceReference Members
 
 		IUnitReference IUnitNamespaceReference.Unit {
-			get { return Dummy.Unit; }
+			get { return Dummy.UnitReference; }
 		}
 
 		public IUnitNamespace ResolvedUnitNamespace {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.UnitNamespace; }
 		}
 
 		#endregion
@@ -5765,7 +5378,7 @@ namespace Microsoft.Cci
 		#region INamespaceDefinition Members
 
 		public INamespaceRootOwner RootOwner {
-			get { return Dummy.Unit; }
+			get { return Dummy.NamespaceRootOwner; }
 		}
 
 		public IEnumerable<INamespaceMember> Members {
@@ -5817,11 +5430,11 @@ namespace Microsoft.Cci
 		#region IUnitNamespaceReference Members
 
 		IUnitReference IUnitNamespaceReference.Unit {
-			get { return Dummy.Unit; }
+			get { return Dummy.UnitReference; }
 		}
 
 		public IUnitNamespace ResolvedUnitNamespace {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.UnitNamespace; }
 		}
 
 		#endregion
@@ -5829,7 +5442,7 @@ namespace Microsoft.Cci
 		#region INestedUnitNamespace Members
 
 		public IUnitNamespace ContainingUnitNamespace {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.UnitNamespace; }
 		}
 
 		#endregion
@@ -5837,15 +5450,17 @@ namespace Microsoft.Cci
 		#region INamespaceMember Members
 
 		public INamespaceDefinition ContainingNamespace {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((INestedUnitNamespaceReference)this);
 		}
 
 		#endregion
@@ -5853,7 +5468,7 @@ namespace Microsoft.Cci
 		#region INestedUnitNamespaceReference Members
 
 		IUnitNamespaceReference INestedUnitNamespaceReference.ContainingUnitNamespace {
-			get { return this; }
+			get { return Dummy.UnitNamespaceReference; }
 		}
 
 		public INestedUnitNamespace ResolvedNestedUnitNamespace {
@@ -5865,7 +5480,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<INamespaceDefinition> Members
 
 		public INamespaceDefinition Container {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		#endregion
@@ -5873,7 +5488,69 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<INamespaceMember>> Members
 
 		public IScope<INamespaceMember> ContainingScope {
-			get { return this; }
+			get { return this.Container; }
+		}
+
+		#endregion
+	}
+
+	[ContractVerification(false)]
+	public sealed class DummyNestedUnitNamespaceReference : Dummy, INestedUnitNamespaceReference
+	{
+		#region INestedUnitNamespaceReference Members
+
+		public IUnitNamespaceReference ContainingUnitNamespace {
+			get { return Dummy.UnitNamespaceReference; }
+		}
+
+		public INestedUnitNamespace ResolvedNestedUnitNamespace {
+			get { return Dummy.NestedUnitNamespace; }
+		}
+
+		#endregion
+
+		#region IUnitNamespaceReference Members
+
+		public new IUnitReference Unit {
+			get { return Dummy.UnitReference; }
+		}
+
+		public IUnitNamespace ResolvedUnitNamespace {
+			get { return Dummy.UnitNamespace; }
+		}
+
+		#endregion
+
+		#region IReference Members
+
+		public IEnumerable<ICustomAttribute> Attributes {
+			get { return Enumerable<ICustomAttribute>.Empty; }
+		}
+
+		public void Dispatch(IMetadataVisitor visitor)
+		{
+			visitor.Visit(this);
+		}
+
+		public void DispatchAsReference(IMetadataVisitor visitor)
+		{
+			visitor.Visit(this);
+		}
+
+		#endregion
+
+		#region IObjectWithLocations Members
+
+		public IEnumerable<ILocation> Locations {
+			get { return Enumerable<ILocation>.Empty; }
+		}
+
+		#endregion
+
+		#region INamedEntity Members
+
+		public new IName Name {
+			get { return Dummy.Name; }
 		}
 
 		#endregion
@@ -5895,8 +5572,7 @@ namespace Microsoft.Cci
 		}
 
 		public IUnitSetNamespace UnitSetNamespaceRoot {
-//^ assume false;
-			get { return Dummy.RootUnitSetNamespace; }
+			get { return Dummy.UnitSetNamespace; }
 		}
 
 		#endregion
@@ -5904,8 +5580,7 @@ namespace Microsoft.Cci
 		#region INamespaceRootOwner Members
 
 		public INamespaceDefinition NamespaceRoot {
-//^ assume false;
-			get { return Dummy.RootUnitSetNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		#endregion
@@ -5927,7 +5602,7 @@ namespace Microsoft.Cci
 		#region INamespaceDefinition Members
 
 		public INamespaceRootOwner RootOwner {
-			get { return Dummy.UnitSet; }
+			get { return Dummy.NamespaceRootOwner; }
 		}
 
 		public IEnumerable<INamespaceMember> Members {
@@ -5944,10 +5619,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public IEnumerable<ILocation> Locations {
@@ -6075,8 +5752,8 @@ namespace Microsoft.Cci
 			get { return Dummy.Assembly; }
 		}
 
-		public AssemblyIdentity AssemblyIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
+		public new AssemblyIdentity AssemblyIdentity {
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		public bool IsRetargetable {
@@ -6088,15 +5765,15 @@ namespace Microsoft.Cci
 		}
 
 		public AssemblyIdentity UnifiedAssemblyIdentity {
-			get { return Dummy.Assembly.AssemblyIdentity; }
+			get { return Dummy.AssemblyIdentity; }
 		}
 
 		#endregion
 
 		#region IModuleReference Members
 
-		public ModuleIdentity ModuleIdentity {
-			get { return this.AssemblyIdentity; }
+		public new ModuleIdentity ModuleIdentity {
+			get { return Dummy.ModuleIdentity; }
 		}
 
 		public IAssemblyReference ContainingAssembly {
@@ -6113,14 +5790,16 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
-		public UnitIdentity UnitIdentity {
-			get { return this.AssemblyIdentity; }
+		public new UnitIdentity UnitIdentity {
+			get { return Dummy.UnitIdentity; }
 		}
 
 		public IUnit ResolvedUnit {
@@ -6208,7 +5887,7 @@ namespace Microsoft.Cci
 		#region IParameterTypeInformation Members
 
 		public ISignature ContainingSignature {
-			get { return Dummy.Method; }
+			get { return Dummy.Signature; }
 		}
 
 		public IEnumerable<ICustomModifier> CustomModifiers {
@@ -6244,7 +5923,7 @@ namespace Microsoft.Cci
 		#region ISpecializedNestedTypeDefinition Members
 
 		public INestedTypeDefinition UnspecializedVersion {
-			get { return Dummy.NestedType; }
+			get { return Dummy.NestedTypeDefinition; }
 		}
 
 		#endregion
@@ -6252,7 +5931,7 @@ namespace Microsoft.Cci
 		#region ISpecializedNestedTypeReference Members
 
 		INestedTypeReference ISpecializedNestedTypeReference.UnspecializedVersion {
-			get { return Dummy.NestedType; }
+			get { return Dummy.NestedTypeReference; }
 		}
 
 		#endregion
@@ -6289,10 +5968,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((ISpecializedNestedTypeReference)this);
 		}
 
 		public IEnumerable<IMethodImplementation> ExplicitImplementationOverrides {
@@ -6304,12 +5985,11 @@ namespace Microsoft.Cci
 		}
 
 		public ushort GenericParameterCount {
-//^ assume false;
 			get { return 0; }
 		}
 
 		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
+			get { return Dummy.GenericTypeInstanceReference; }
 		}
 
 		public IEnumerable<ITypeReference> Interfaces {
@@ -6461,7 +6141,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -6473,7 +6153,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		public ITypeDefinition Container {
-			get { return this.ContainingTypeDefinition; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		#endregion
@@ -6489,7 +6169,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		public IScope<ITypeDefinitionMember> ContainingScope {
-			get { return this.ContainingTypeDefinition; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -6526,7 +6206,7 @@ namespace Microsoft.Cci
 		#region INestedTypeReference Members
 
 		INestedTypeDefinition INestedTypeReference.ResolvedType {
-			get { return Dummy.NestedType; }
+			get { return Dummy.NestedTypeDefinition; }
 		}
 
 		#endregion
@@ -6535,7 +6215,7 @@ namespace Microsoft.Cci
 
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return this; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -6547,7 +6227,7 @@ namespace Microsoft.Cci
 		}
 
 		public INamedTypeDefinition ResolvedType {
-			get { return this; }
+			get { return Dummy.NamedTypeDefinition; }
 		}
 
 		#endregion
@@ -6640,15 +6320,17 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((ISpecializedFieldReference)this);
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -6660,7 +6342,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		public ITypeDefinition Container {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		#endregion
@@ -6684,7 +6366,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		public IScope<ITypeDefinitionMember> ContainingScope {
-			get { return Dummy.Type; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -6692,7 +6374,7 @@ namespace Microsoft.Cci
 		#region ISpecializedFieldDefinition Members
 
 		public IFieldDefinition UnspecializedVersion {
-			get { return Dummy.Field; }
+			get { return Dummy.FieldDefinition; }
 		}
 
 		#endregion
@@ -6700,7 +6382,7 @@ namespace Microsoft.Cci
 		#region ISpecializedFieldReference Members
 
 		IFieldReference ISpecializedFieldReference.UnspecializedVersion {
-			get { return Dummy.Field; }
+			get { return Dummy.FieldReference; }
 		}
 
 		#endregion
@@ -6712,7 +6394,7 @@ namespace Microsoft.Cci
 		}
 
 		public IFieldDefinition ResolvedField {
-			get { return Dummy.Field; }
+			get { return Dummy.FieldDefinition; }
 		}
 
 		#endregion
@@ -6745,7 +6427,7 @@ namespace Microsoft.Cci
 		#region ISpecializedMethodDefinition Members
 
 		public IMethodDefinition UnspecializedVersion {
-			get { return Dummy.Method; }
+			get { return Dummy.MethodDefinition; }
 		}
 
 		#endregion
@@ -6774,7 +6456,6 @@ namespace Microsoft.Cci
 
 		[Pure()]
 		public ushort GenericParameterCount {
-//^ assume false;
 			get { return 0; }
 		}
 
@@ -6951,7 +6632,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -6963,7 +6644,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		public ITypeDefinition Container {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		#endregion
@@ -6988,10 +6669,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((ISpecializedMethodReference)this);
 		}
 
 		#endregion
@@ -6999,7 +6682,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		public IScope<ITypeDefinitionMember> ContainingScope {
-			get { return Dummy.Type; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -7024,7 +6707,7 @@ namespace Microsoft.Cci
 		}
 
 		public IMethodDefinition ResolvedMethod {
-			get { return this; }
+			get { return Dummy.MethodDefinition; }
 		}
 
 		public IEnumerable<IParameterTypeInformation> ExtraParameters {
@@ -7040,7 +6723,7 @@ namespace Microsoft.Cci
 		}
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return this; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -7053,7 +6736,7 @@ namespace Microsoft.Cci
 		#region ISpecializedPropertyDefinition Members
 
 		public IPropertyDefinition UnspecializedVersion {
-			get { return Dummy.Property; }
+			get { return Dummy.PropertyDefinition; }
 		}
 
 		#endregion
@@ -7129,7 +6812,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -7145,7 +6828,7 @@ namespace Microsoft.Cci
 		}
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return Dummy.Property; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -7153,7 +6836,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		public ITypeDefinition Container {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		#endregion
@@ -7178,10 +6861,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		#endregion
@@ -7189,7 +6874,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		public IScope<ITypeDefinitionMember> ContainingScope {
-			get { return Dummy.Type; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -7286,12 +6971,11 @@ namespace Microsoft.Cci
 		}
 
 		public ushort GenericParameterCount {
-//^ assume false;
 			get { return 0; }
 		}
 
 		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
+			get { return Dummy.GenericTypeInstanceReference; }
 		}
 
 		public IEnumerable<ITypeReference> Interfaces {
@@ -7416,10 +7100,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IFunctionPointerTypeReference)this);
 		}
 
 		#endregion
@@ -7464,7 +7150,7 @@ namespace Microsoft.Cci
 		}
 
 		ITypeDefinition ITypeReference.ResolvedType {
-			get { return this; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public uint InternedKey {
@@ -7508,8 +7194,8 @@ namespace Microsoft.Cci
 			get { return Enumerable<ILocation>.Empty; }
 		}
 
-		public IMethodDefinition MethodDefinition {
-			get { return Dummy.Method; }
+		public new IMethodDefinition MethodDefinition {
+			get { return Dummy.MethodDefinition; }
 		}
 
 		public new ITypeReference Type {
@@ -7554,7 +7240,7 @@ namespace Microsoft.Cci
 		}
 
 		public IFieldDefinition ResolvedField {
-			get { return Dummy.Field; }
+			get { return Dummy.FieldDefinition; }
 		}
 
 		#endregion
@@ -7566,7 +7252,7 @@ namespace Microsoft.Cci
 		}
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return Dummy.Field; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -7579,10 +7265,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public IEnumerable<ILocation> Locations {
@@ -7606,7 +7294,7 @@ namespace Microsoft.Cci
 		#region IParameterDefinition Members
 
 		public ISignature ContainingSignature {
-			get { return Dummy.Method; }
+			get { return Dummy.Signature; }
 		}
 
 		public IMetadataConstant DefaultValue {
@@ -7659,10 +7347,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.VisitReference(this);
 		}
 
 		#endregion
@@ -7830,10 +7520,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IMethodReference)this);
 		}
 
 		#endregion
@@ -7841,7 +7533,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<INamespaceDefinition> Members
 
 		public INamespaceDefinition Container {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		#endregion
@@ -7870,7 +7562,6 @@ namespace Microsoft.Cci
 
 		[Pure()]
 		public ushort GenericParameterCount {
-//^ assume false;
 			get { return 0; }
 		}
 
@@ -8015,7 +7706,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<INamespaceMember>> Members
 
 		public IScope<INamespaceMember> ContainingScope {
-			get { return Dummy.RootUnitNamespace; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -8023,7 +7714,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -8035,7 +7726,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		ITypeDefinition IContainerMember<ITypeDefinition>.Container {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		#endregion
@@ -8043,7 +7734,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		IScope<ITypeDefinitionMember> IScopeMember<IScope<ITypeDefinitionMember>>.ContainingScope {
-			get { return Dummy.Type; }
+			get { return this.ContainingTypeDefinition; }
 		}
 
 		#endregion
@@ -8084,7 +7775,7 @@ namespace Microsoft.Cci
 		}
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return this; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -8105,15 +7796,17 @@ namespace Microsoft.Cci
 		#region INamespaceMember Members
 
 		public INamespaceDefinition ContainingNamespace {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IFieldReference)this);
 		}
 
 		#endregion
@@ -8121,7 +7814,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<INamespaceDefinition> Members
 
 		public INamespaceDefinition Container {
-			get { return Dummy.RootUnitNamespace; }
+			get { return Dummy.NamespaceDefinition; }
 		}
 
 		#endregion
@@ -8137,7 +7830,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<INamespaceMember>> Members
 
 		public IScope<INamespaceMember> ContainingScope {
-			get { return Dummy.RootUnitNamespace; }
+			get { return this.Container; }
 		}
 
 		#endregion
@@ -8213,12 +7906,7 @@ namespace Microsoft.Cci
 		}
 
 		public new IMarshallingInformation MarshallingInformation {
-			get {
-				//^ assume false;
-				IMarshallingInformation 				/*?*/dummyValue = null;
-				//^ assume dummyValue != null;
-				return dummyValue;
-			}
+			get { return Dummy.MarshallingInformation; }
 		}
 
 		public new ITypeReference Type {
@@ -8230,7 +7918,7 @@ namespace Microsoft.Cci
 		#region ITypeDefinitionMember Members
 
 		public ITypeDefinition ContainingTypeDefinition {
-			get { return Dummy.Type; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public TypeMemberVisibility Visibility {
@@ -8242,7 +7930,7 @@ namespace Microsoft.Cci
 		#region IContainerMember<ITypeDefinition> Members
 
 		ITypeDefinition IContainerMember<ITypeDefinition>.Container {
-			get { return Dummy.Type; }
+			get { return this.ContainingTypeDefinition; }
 		}
 
 		#endregion
@@ -8250,7 +7938,7 @@ namespace Microsoft.Cci
 		#region IScopeMember<IScope<ITypeDefinitionMember>> Members
 
 		IScope<ITypeDefinitionMember> IScopeMember<IScope<ITypeDefinitionMember>>.ContainingScope {
-			get { return Dummy.Type; }
+			get { return this.ContainingTypeDefinition; }
 		}
 
 		#endregion
@@ -8262,7 +7950,7 @@ namespace Microsoft.Cci
 		}
 
 		public IFieldDefinition ResolvedField {
-			get { return this; }
+			get { return Dummy.FieldDefinition; }
 		}
 
 		#endregion
@@ -8274,7 +7962,7 @@ namespace Microsoft.Cci
 		}
 
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return this; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		#endregion
@@ -8508,12 +8196,11 @@ namespace Microsoft.Cci
 		}
 
 		public ushort GenericParameterCount {
-//^ assume false;
 			get { return 0; }
 		}
 
 		public IGenericTypeInstanceReference InstanceType {
-			get { return Dummy.GenericTypeInstance; }
+			get { return Dummy.GenericTypeInstanceReference; }
 		}
 
 		public IEnumerable<ITypeReference> Interfaces {
@@ -8638,10 +8325,12 @@ namespace Microsoft.Cci
 
 		public void Dispatch(IMetadataVisitor visitor)
 		{
+			visitor.Visit(this);
 		}
 
 		public void DispatchAsReference(IMetadataVisitor visitor)
 		{
+			visitor.Visit((IArrayTypeReference)this);
 		}
 
 		#endregion
@@ -8681,7 +8370,7 @@ namespace Microsoft.Cci
 		}
 
 		public ITypeDefinition ResolvedType {
-			get { return this; }
+			get { return Dummy.TypeDefinition; }
 		}
 
 		public uint InternedKey {
@@ -8701,18 +8390,16 @@ namespace Microsoft.Cci
 		}
 
 		public IEnumerable<int> LowerBounds {
-			get { return this.lowerBounds; }
+			get { return Enumerable<int>.Empty; }
 		}
-		IEnumerable<int> lowerBounds = Enumerable<int>.Empty;
 
 		public uint Rank {
 			get { return 0; }
 		}
 
 		public IEnumerable<ulong> Sizes {
-			get { return this.sizes; }
+			get { return Enumerable<ulong>.Empty; }
 		}
-		IEnumerable<ulong> sizes = Enumerable<ulong>.Empty;
 
 		#endregion
 	}

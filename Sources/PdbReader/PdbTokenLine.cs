@@ -21,6 +21,7 @@ namespace Microsoft.Cci.Pdb
 		public uint endLine;
 		public uint endColumn;
 		public PdbSource sourceFile;
+		public PdbTokenLine 		/*?*/nextLine;
 
 		public PdbTokenLine(uint token, uint file_id, uint line, uint column, uint endLine, uint endColumn)
 		{

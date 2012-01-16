@@ -24,6 +24,7 @@ namespace Microsoft.Cci.Pdb
 
 		public uint token;
 		public uint slotToken;
+		public uint tokenOfMethodWhoseUsingInfoAppliesToThisMethod;
 		//internal string name;
 		//internal string module;
 		//internal ushort flags;
@@ -371,8 +372,8 @@ namespace Microsoft.Cci.Pdb
 					this.ReadUsingInfo(bits);
 					break;
 				case 1:
+					this.ReadForwardInfo(bits);
 					break;
-				// this.ReadForwardInfo(bits); break;
 				case 2:
 					break;
 				// this.ReadForwardedToModuleInfo(bits); break;
@@ -410,8 +411,10 @@ namespace Microsoft.Cci.Pdb
 		//private void ReadForwardedToModuleInfo(BitAccess bits) {
 		//}
 
-		//private void ReadForwardInfo(BitAccess bits) {
-		//}
+		public void ReadForwardInfo(BitAccess bits)
+		{
+			bits.ReadUInt32(out this.tokenOfMethodWhoseUsingInfoAppliesToThisMethod);
+		}
 
 		public void ReadUsingInfo(BitAccess bits)
 		{

@@ -14,8 +14,6 @@ using System.Diagnostics;
 using System.Text;
 using System.Diagnostics.Contracts;
 
-//^ using Microsoft.Contracts;
-
 namespace Microsoft.Cci.Immutable
 {
 
@@ -98,7 +96,7 @@ namespace Microsoft.Cci.Immutable
 		/// The method being referred to.
 		/// </summary>
 		public IMethodDefinition ResolvedMethod {
-			get { return Dummy.Method; }
+			get { return Dummy.MethodDefinition; }
 		}
 
 		/// <summary>
@@ -203,7 +201,7 @@ namespace Microsoft.Cci.Immutable
 		/// The type definition member this reference resolves to.
 		/// </summary>
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
-			get { return Dummy.Method; }
+			get { return Dummy.TypeDefinitionMember; }
 		}
 
 		/// <summary>
@@ -1207,7 +1205,7 @@ namespace Microsoft.Cci.Immutable
 			get { return this.definingMethod; }
 			set {
 				Contract.Requires(this.DefiningMethod == Dummy.MethodReference);
-				Contract.Requires(value != Dummy.MethodReference);
+				Contract.Requires(!(value is Dummy));
 				this.definingMethod = value;
 			}
 		}
@@ -1295,8 +1293,8 @@ namespace Microsoft.Cci.Immutable
 
 		ITypeDefinition ITypeReference.ResolvedType {
 			get {
-				if (this.ResolvedType == Dummy.GenericMethodParameter)
-					return Dummy.Type;
+				if (this.ResolvedType is Dummy)
+					return Dummy.TypeDefinition;
 				return this.ResolvedType;
 			}
 		}
@@ -1946,9 +1944,8 @@ namespace Microsoft.Cci.Immutable
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
 			get {
 				var result = this.ResolvedField;
-				if (result == Dummy.Field)
-					return Dummy.Field;
-				//TODO: need Dummy.TypeDefinitionMember;
+				if (result is Dummy)
+					return Dummy.TypeDefinitionMember;
 				return result;
 			}
 		}
@@ -2182,8 +2179,8 @@ namespace Microsoft.Cci.Immutable
 		ITypeDefinition ITypeReference.ResolvedType {
 			get {
 				var result = this.ResolvedType;
-				if (result == Dummy.GenericMethodParameter)
-					return Dummy.Type;
+				if (result is Dummy)
+					return Dummy.TypeDefinition;
 				return result;
 			}
 		}
@@ -2418,14 +2415,33 @@ namespace Microsoft.Cci.Immutable
 					var specializedContainingType = TypeHelper.SpecializeTypeReference(fieldReference.ContainingType, this.containingMethod, this.internFactory);
 					specialized = new SpecializedFieldReference(specializedContainingType, fieldReference, this.internFactory);
 				} else {
+					var genericMethod = unspecialized as IGenericMethodInstanceReference;
+					if (genericMethod != null)
+						return Specialize(genericMethod, map);
 					var methodReference = unspecialized as IMethodReference;
 					if (methodReference != null) {
 						var specializedContainingType = TypeHelper.SpecializeTypeReference(methodReference.ContainingType, this.containingMethod, this.internFactory);
+						var specializedMethod = methodReference as ISpecializedMethodReference;
+						if (specializedMethod != null)
+							methodReference = specializedMethod.UnspecializedVersion;
 						specialized = new SpecializedMethodReference(specializedContainingType, methodReference, this.internFactory);
 					} else
 						return unspecialized;
 				}
 			}
+			map.Add(unspecialized, specialized);
+			return specialized;
+		}
+
+		public object Specialize(IGenericMethodInstanceReference unspecialized, Dictionary<object, object> map)
+		{
+			var specializedMethod = (IMethodReference)this.Specialize(unspecialized.GenericMethod, map);
+			var args = new List<ITypeReference>(unspecialized.GenericArguments);
+			for (int i = 0, n = args.Count; i < n; i++) {
+				var arg = TypeHelper.SpecializeTypeReference(args[i], unspecialized, this.internFactory);
+				args[i] = TypeHelper.SpecializeTypeReference(arg, this.containingMethod, this.internFactory);
+			}
+			var specialized = new GenericMethodInstanceReference(specializedMethod, IteratorHelper.GetReadonly(args.ToArray()), this.internFactory);
 			map.Add(unspecialized, specialized);
 			return specialized;
 		}
@@ -3101,6 +3117,8 @@ namespace Microsoft.Cci.Immutable
 		/// </summary>
 		public SpecializedMethodReference(ITypeReference containingType, IMethodReference unspecializedVersion, IInternFactory internFactory)
 		{
+			Contract.Requires(!(unspecializedVersion is ISpecializedMethodReference));
+
 			this.containingType = containingType;
 			this.unspecializedVersion = unspecializedVersion;
 			this.internFactory = internFactory;
@@ -3287,9 +3305,8 @@ namespace Microsoft.Cci.Immutable
 		public ITypeDefinitionMember ResolvedTypeDefinitionMember {
 			get {
 				var result = this.ResolvedMethod;
-				if (result == Dummy.Method)
-					return Dummy.Method;
-				//TODO: introduce Dummy.TypeDefinitionMember
+				if (result is Dummy)
+					return Dummy.TypeDefinitionMember;
 				return result;
 			}
 		}

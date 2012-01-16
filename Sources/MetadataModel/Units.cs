@@ -1570,6 +1570,7 @@ namespace Microsoft.Cci
 		public IEnumerable<IPESection> UninterpretedSections {
 			get {
 				Contract.Ensures(Contract.Result<IEnumerable<IPESection>>() != null);
+				Contract.Ensures(Contract.ForAll(Contract.Result<IEnumerable<IPESection>>(), x => x != null));
 				throw new NotImplementedException();
 			}
 		}
@@ -1639,6 +1640,7 @@ namespace Microsoft.Cci
 	/// <summary>
 	/// A reference to a instance of <see cref="IUnit"/>.
 	/// </summary>
+	[ContractClass(typeof(IUnitReferenceContract))]
 	public interface IUnitReference : IReference, INamedEntity
 	{
 
@@ -1653,6 +1655,71 @@ namespace Microsoft.Cci
 		/// <remarks>The location might not be set.</remarks>
 		UnitIdentity UnitIdentity { get; }
 	}
+
+	#region IUnitReference contract binding
+	[ContractClassFor(typeof(IUnitReference))]
+	public abstract class IUnitReferenceContract : IUnitReference
+	{
+		#region IUnitReference Members
+
+		public IUnit ResolvedUnit {
+			get {
+				Contract.Ensures(Contract.Result<IUnit>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		public UnitIdentity UnitIdentity {
+			get {
+				Contract.Ensures(Contract.Result<UnitIdentity>() != null);
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region IReference Members
+
+		public IEnumerable<ICustomAttribute> Attributes {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		public void Dispatch(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void DispatchAsReference(IMetadataVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region IObjectWithLocations Members
+
+		public IEnumerable<ILocation> Locations {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+		#region INamedEntity Members
+
+		public IName Name {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+	}
+	#endregion
+
 
 	/// <summary>
 	/// A set of units that all contribute to a unified root namespace. For example the set of assemblies referenced by a C# project.

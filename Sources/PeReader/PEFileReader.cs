@@ -2312,7 +2312,7 @@ namespace Microsoft.Cci.MetadataReader.PEFile
 
 		public string ReadDebugInformationLocationFromDebugTableDirectoryData()
 		{
-			if (this.OptionalHeaderDirectoryEntries.DebugTableDirectory.Size == 0)
+			if (this.OptionalHeaderDirectoryEntries.DebugTableDirectory.Size != 0x1c)
 				return string.Empty;
 			var debugDirectoryReader = new MemoryReader(this.DirectoryToMemoryBlock(this.OptionalHeaderDirectoryEntries.DebugTableDirectory));
 			PeDebugDirectory debugDir = new PeDebugDirectory();
@@ -2327,11 +2327,22 @@ namespace Microsoft.Cci.MetadataReader.PEFile
 			if (debugDir.SizeOfData == 0)
 				return string.Empty;
 			var dataBlock = new MemoryBlock(this.BinaryDocumentMemoryBlock.Pointer + debugDir.PointerToRawData, debugDir.SizeOfData);
+			var ptrToDebugInfo = this.BinaryDocumentMemoryBlock.Pointer + debugDir.PointerToRawData;
+			var ptrToDebugInfoEnd = this.BinaryDocumentMemoryBlock.Pointer + debugDir.PointerToRawData + debugDir.SizeOfData;
+			if (ptrToDebugInfo >= this.BinaryDocumentMemoryBlock.Pointer + this.BinaryDocumentMemoryBlock.Length - 28) {
+				//TODO: error
+				return string.Empty;
+			}
+			if (ptrToDebugInfoEnd > this.BinaryDocumentMemoryBlock.Pointer + this.BinaryDocumentMemoryBlock.Length) {
+				//TODO: error
+				return string.Empty;
+			}
 			var debugDataReader = new MemoryReader(dataBlock);
 			var magic = debugDataReader.ReadUInt32();
 			if (magic != 0x53445352) {
 				//RSDS in little endian format
 				//TODO: error
+				return string.Empty;
 			}
 			var unknown1 = debugDataReader.ReadUInt32();
 			var unknown2 = debugDataReader.ReadUInt32();

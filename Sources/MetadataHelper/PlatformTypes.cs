@@ -181,7 +181,7 @@ namespace Microsoft.Cci.Immutable
 		/// </summary>
 		public IModule ResolvedModule {
 			get {
-				if (this.ResolvedAssembly == Dummy.Assembly)
+				if (this.ResolvedAssembly is Dummy)
 					return Dummy.Module;
 				return this.ResolvedAssembly;
 			}
@@ -192,7 +192,7 @@ namespace Microsoft.Cci.Immutable
 		/// </summary>
 		public IUnit ResolvedUnit {
 			get {
-				if (this.ResolvedModule == Dummy.Module)
+				if (this.ResolvedModule is Dummy)
 					return Dummy.Unit;
 				return this.ResolvedModule;
 			}
@@ -434,7 +434,7 @@ namespace Microsoft.Cci.Immutable
 		/// </summary>
 		public IUnit ResolvedUnit {
 			get {
-				if (this.ResolvedModule == Dummy.Module)
+				if (this.ResolvedModule is Dummy)
 					return Dummy.Unit;
 				return this.ResolvedModule;
 			}
@@ -591,7 +591,7 @@ namespace Microsoft.Cci.Immutable
 		public override ITypeDefinition Resolve()
 		{
 			var rt = this.ResolvedType;
-			if (rt == Dummy.NamespaceTypeDefinition)
+			if (rt is Dummy)
 				return Dummy.Type;
 			return rt;
 		}

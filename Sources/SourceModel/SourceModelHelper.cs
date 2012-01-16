@@ -14,8 +14,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
 
-//^ using Microsoft.Contracts;
-
 namespace Microsoft.Cci
 {
 	/// <summary>
@@ -126,7 +124,7 @@ namespace Microsoft.Cci
 
 		#region Helper methods
 
-		private IMethodDefinition lastUsedMethod = Dummy.Method;
+		private IMethodDefinition lastUsedMethod = Dummy.MethodDefinition;
 		private ISourceLocationProvider lastUsedProvider = default(ISourceLocationProvider);
 		public ISourceLocationProvider GetProvider(		/*?*/IMethodDefinition methodDefinition)
 		{
@@ -306,7 +304,7 @@ namespace Microsoft.Cci
 
 		#region Helper methods
 
-		private IMethodDefinition lastUsedMethod = Dummy.Method;
+		private IMethodDefinition lastUsedMethod = Dummy.MethodDefinition;
 		private ILocalScopeProvider lastUsedProvider = null;
 		public ILocalScopeProvider GetProvider(		/*?*/IMethodDefinition methodDefinition)
 		{

@@ -282,7 +282,7 @@ namespace Microsoft.Cci
 			Contract.Requires(instruction != null);
 			Contract.Requires(stringBuilder != null);
 
-			if (instruction.Operation == Dummy.Operation)
+			if (instruction.Operation is Dummy)
 				stringBuilder.Append("stack");
 			else
 				stringBuilder.Append(instruction.Operation.Offset.ToString("x4"));
@@ -298,6 +298,8 @@ namespace Microsoft.Cci
 			}
 			set {
 				Contract.Requires(value != null);
+				Contract.Assume(!(value is Dummy));
+				//It is a bit too onerous on the client code to prove this statically, but it does seem a very desirable check.
 				type = value;
 			}
 		}

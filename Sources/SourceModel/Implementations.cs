@@ -90,7 +90,7 @@ namespace Microsoft.Cci
 			List<IUnit> units = new List<IUnit>();
 			foreach (UnitIdentity unitId in referencedUnitSet.Units) {
 				IUnit unit = this.LoadUnit(unitId);
-				if (unit == Dummy.Unit)
+				if (unit is Dummy)
 					return Dummy.UnitSet;
 				units.Add(unit);
 			}

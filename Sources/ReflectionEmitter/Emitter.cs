@@ -317,7 +317,7 @@ namespace Microsoft.Cci.ReflectionEmitter
 					attributes |= FieldAttributes.RTSpecialName;
 				if (fieldDefinition.IsMarshalledExplicitly)
 					attributes |= FieldAttributes.HasFieldMarshal;
-				if (fieldDefinition.CompileTimeValue != Dummy.Constant)
+				if (!(fieldDefinition.CompileTimeValue is Dummy))
 					attributes |= FieldAttributes.HasDefault;
 				return attributes;
 			}
@@ -706,7 +706,7 @@ namespace Microsoft.Cci.ReflectionEmitter
 			public override void Visit(IFieldDefinition fieldDefinition)
 			{
 				var fieldBuilder = (FieldBuilder)this.loader.builderMap[fieldDefinition];
-				if (fieldDefinition.CompileTimeValue != Dummy.Constant) {
+				if (!(fieldDefinition.CompileTimeValue is Dummy)) {
 					fieldDefinition.CompileTimeValue.Dispatch(this);
 					fieldBuilder.SetConstant(this.value);
 				}
@@ -806,7 +806,7 @@ namespace Microsoft.Cci.ReflectionEmitter
 					}
 					if (method.ReturnValueIsMarshalledExplicitly) {
 						string returnValueName = null;
-						if (method.ReturnValueName != Dummy.Name)
+						if (!(method.ReturnValueName is Dummy))
 							returnValueName = method.ReturnValueName.Value;
 						var returnValue = methodBuilder.DefineParameter(0, ParameterAttributes.Retval | ParameterAttributes.HasFieldMarshal, returnValueName);
 						returnValue.SetCustomAttribute(GetMarshalAsAttribute(method.ReturnValueMarshallingInformation));

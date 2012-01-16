@@ -95,13 +95,14 @@ object pIStream, bool fFullBuild, string finalfilename);
 	{
 		void OpenMapTokensToSourceSpans();
 
+		void CloseMapTokensToSourceSpans();
+
 		/// <summary>
 		/// Maps the given metadata token to the given source line span in the specified source file. 
 		/// Must be called between calls to OpenMapTokensToSourceSpans() and CloseMapTokensToSourceSpans().
 		/// </summary>
 		void MapTokenToSourceSpan(uint token, ISymUnmanagedDocumentWriter document, uint line, uint column, uint endLine, uint endColumn);
 
-		void CloseMapTokensToSourceSpans();
 	}
 
 	public struct ImageDebugDirectory

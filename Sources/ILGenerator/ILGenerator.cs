@@ -128,13 +128,6 @@ namespace Microsoft.Cci
 							label.Offset = operation.offset;
 							continue;
 						}
-						// REVIEW: Do we really want to do this? Should it be an optimization that is made upstream?
-						if (label.labelsReturnInstruction && (operation.OperationCode == OperationCode.Br || operation.OperationCode == OperationCode.Br_S)) {
-							numberOfAdjustments++;
-							adjustment -= (operation.OperationCode == OperationCode.Br ? 4 : 1);
-							this.operations[i] = new Operation(OperationCode.Ret, operation.offset, label.locationOfReturnInstruction, null);
-							continue;
-						}
 						//For backward branches, this test will compare the new offset of the label with the old offset of the current
 						//instruction. This is OK, because the new offset of the label will be less than or equal to its old offset.
 						bool isForwardBranch = label.Offset >= oldOffset;
@@ -298,7 +291,6 @@ namespace Microsoft.Cci
 					if (previousOp.OperationCode != (OperationCode)int.MaxValue)
 						break;
 					ILGeneratorLabel labelOfBranch = (ILGeneratorLabel)previousOp.value;
-					labelOfBranch.labelsReturnInstruction = true;
 					labelOfBranch.locationOfReturnInstruction = loc;
 				}
 			}
@@ -969,7 +961,6 @@ namespace Microsoft.Cci
 
 		public ILGeneratorLabel 		/*?*/alias;
 		public bool mayAlias;
-		public bool labelsReturnInstruction;
 		/// <summary>
 		/// Non-null only when labelsReturnInstruction is true.
 		/// </summary>
@@ -994,7 +985,7 @@ namespace Microsoft.Cci
 			this.isReference = false;
 			this.locations = new List<ILocation>();
 			this.name = Dummy.Name;
-			this.methodDefinition = Dummy.Method;
+			this.methodDefinition = Dummy.MethodDefinition;
 			this.type = Dummy.TypeReference;
 		}
 
@@ -1033,7 +1024,7 @@ namespace Microsoft.Cci
 		/// </summary>
 		/// <value></value>
 		public bool IsConstant {
-			get { return this.compileTimeValue != Dummy.Constant; }
+			get { return !(this.compileTimeValue is Dummy); }
 		}
 
 		/// <summary>
