@@ -9,77 +9,87 @@
 //
 //-----------------------------------------------------------------------------
 
-namespace Microsoft.Cci.WriterUtilities {
-  public sealed class MemoryStream {
+namespace Microsoft.Cci.WriterUtilities
+{
+	public sealed class MemoryStream
+	{
 
-    public MemoryStream() {
-      this.Buffer = new byte[64];
-    }
+		public MemoryStream()
+		{
+			this.Buffer = new byte[64];
+		}
 
-    public MemoryStream(uint initialSize)
-      //^ requires initialSize > 0;
-    {
-      this.Buffer = new byte[initialSize];
-    }
+		//^ requires initialSize > 0;
+		public MemoryStream(uint initialSize)
+		{
+			this.Buffer = new byte[initialSize];
+		}
 
-    public byte[] Buffer;
-    //^ invariant Buffer.LongLength > 0;
+		public byte[] Buffer;
+		//^ invariant Buffer.LongLength > 0;
 
-    private void Grow(byte[] myBuffer, uint n, uint m)
-      //^ requires n > 0;
-    {
-      ulong n2 = n*2;
-      if (n2 == 0) n2 = 16;
-      while (m >= n2) n2 = n2*2;
-      byte[] newBuffer = this.Buffer = new byte[n2];
-      for (int i = 0; i < n; i++)
-        newBuffer[i] = myBuffer[i];
-    }
+		//^ requires n > 0;
+		public void Grow(byte[] myBuffer, uint n, uint m)
+		{
+			ulong n2 = n * 2;
+			if (n2 == 0)
+				n2 = 16;
+			while (m >= n2)
+				n2 = n2 * 2;
+			byte[] newBuffer = this.Buffer = new byte[n2];
+			for (int i = 0; i < n; i++)
+				newBuffer[i] = myBuffer[i];
+		}
 
-    public uint Length;
+		public uint Length;
 
-    public uint Position {
-      get {
-        return this.position;
-      }
-      set {
-        byte[] myBuffer = this.Buffer;
-#if COMPACTFX
-        uint n = (uint)myBuffer.Length;
-#else
-        uint n = (uint)myBuffer.LongLength;
-#endif
-        if (value >= n) this.Grow(myBuffer, n, value);
-        if (value > this.Length) this.Length = value;
-        this.position = value;
-      }
-    }
-    private uint position;
+		public uint Position {
+			get { return this.position; }
+			set {
+				byte[] myBuffer = this.Buffer;
+				#if COMPACTFX
+				uint n = (uint)myBuffer.Length;
+				#else
+				uint n = (uint)myBuffer.LongLength;
+				#endif
+				if (value >= n)
+					this.Grow(myBuffer, n, value);
+				if (value > this.Length)
+					this.Length = value;
+				this.position = value;
+			}
+		}
+		private uint position;
 
-    public byte[] ToArray() {
-      uint n = this.Length;
-      byte[] source = this.Buffer;
-      if (source.Length == n) return this.Buffer;
-      byte[] result = new byte[n];
-      for (int i = 0; i < n; i++)
-        result[i] = source[i];
-      return result;
-    }
+		public byte[] ToArray()
+		{
+			uint n = this.Length;
+			byte[] source = this.Buffer;
+			if (source.Length == n)
+				return this.Buffer;
+			byte[] result = new byte[n];
+			for (int i = 0; i < n; i++)
+				result[i] = source[i];
+			return result;
+		}
 
-    public void Write(byte[] buffer, uint index, uint count) {
-      uint p = this.position;
-      this.Position = p + count;
-      byte[] myBuffer = this.Buffer;
-      for (uint i = 0, j = p, k = index; i < count; i++)
-        myBuffer[j++] = buffer[k++];
-    }
+		public void Write(byte[] buffer, uint index, uint count)
+		{
+			uint p = this.position;
+			this.Position = p + count;
+			byte[] myBuffer = this.Buffer;
+			for (uint i = 0, j = p, k = index; i < count; i++)
+				myBuffer[j++] = buffer[k++];
+		}
 
-    public void WriteTo(MemoryStream stream) {
-      stream.Write(this.Buffer, 0, this.Length);
-    }
+		public void WriteTo(MemoryStream stream)
+		{
+			stream.Write(this.Buffer, 0, this.Length);
+		}
 
-    public void WriteTo(System.IO.Stream stream) {
-      stream.Write(this.Buffer, 0, (int)this.Length);
-    }
-  }
+		public void WriteTo(System.IO.Stream stream)
+		{
+			stream.Write(this.Buffer, 0, (int)this.Length);
+		}
+	}
 }

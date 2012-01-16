@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //
 // Copyright (c) Microsoft. All rights reserved.
 // This code is licensed under the Microsoft Public License.
@@ -14,393 +14,407 @@ using System.Diagnostics;
 using System.Threading;
 //^ using Microsoft.Contracts;
 
-namespace Microsoft.Cci {
-
-#pragma warning disable 1591
-
-  public static class SourceDummy {
-
-    public static ICompilation Compilation {
-      get {
-        if (SourceDummy.compilation == null)
-          Interlocked.CompareExchange(ref SourceDummy.compilation, new DummyCompilation(), null);
-        return SourceDummy.compilation;
-      }
-    }
-    private static ICompilation/*?*/ compilation;
-
-    public static IPrimarySourceDocument PrimarySourceDocument {
-      get {
-        if (SourceDummy.primarySourceDocument == null)
-          Interlocked.CompareExchange(ref SourceDummy.primarySourceDocument, new DummyPrimarySourceDocument(), null);
-        return SourceDummy.primarySourceDocument;
-      }
-    }
-    private static IPrimarySourceDocument/*?*/ primarySourceDocument;
-
-    /// <summary>
-    /// This source location behaves as the notorious FeeFee: a source
-    /// context which exists in the PDB file, but which debuggers do not
-    /// stop at. It is needed, e.g., to mark the first IL operation in a
-    /// method body if it does not have any real source location (such as
-    /// compiler generated closure initialization code). Without that, the
-    /// debugger appears to not step into method calls.
-    /// </summary>
-    public static IPrimarySourceLocation PrimarySourceLocation {
-      get {
-        if (SourceDummy.primarySourceLocation == null)
-          Interlocked.CompareExchange(ref SourceDummy.primarySourceLocation, new DummyPrimarySourceLocation(), null);
-        return SourceDummy.primarySourceLocation;
-      }
-    }
-    private static IPrimarySourceLocation/*?*/ primarySourceLocation;
-
-    public static ISourceDocument SourceDocument {
-      get {
-        if (SourceDummy.sourceDocument == null)
-          Interlocked.CompareExchange(ref SourceDummy.sourceDocument, new DummySourceDocument(), null);
-        return SourceDummy.sourceDocument;
-      }
-    }
-    private static ISourceDocument/*?*/ sourceDocument;
-
-    public static ISourceDocumentEdit SourceDocumentEdit {
-      get {
-        if (SourceDummy.sourceDocumentEdit == null)
-          Interlocked.CompareExchange(ref SourceDummy.sourceDocumentEdit, new DummySourceDocumentEdit(), null);
-        return SourceDummy.sourceDocumentEdit;
-      }
-    }
-    private static ISourceDocumentEdit/*?*/ sourceDocumentEdit;
-
-    public static ISourceLocation SourceLocation {
-      get {
-        if (SourceDummy.sourceLocation == null)
-          Interlocked.CompareExchange(ref SourceDummy.sourceLocation, new DummySourceLocation(), null);
-        return SourceDummy.sourceLocation;
-      }
-    }
-    private static ISourceLocation/*?*/ sourceLocation;
-
-  }
-
-  internal sealed class DummyCompilation : ICompilation {
-
-    #region ICompilation Members
-
-    public IPlatformType PlatformType {
-      get { return Dummy.PlatformType; }
-    }
-
-    public bool Contains(ISourceDocument sourceDocument) {
-      return false;
-    }
-
-    public IUnitSet GetUnitSetFor(IName unitSetName) {
-      return Dummy.UnitSet;
-    }
-
-    public IUnit Result {
-      get { return Dummy.Unit; }
-    }
-
-    public IUnitSet UnitSet {
-      get { return Dummy.UnitSet; }
-    }
-
-    #endregion
-  }
-
-  internal sealed class DummyPrimarySourceDocument : IPrimarySourceDocument {
-
-    #region IPrimarySourceDocument Members
-
-    Guid IPrimarySourceDocument.DocumentType {
-      get { return Guid.Empty; }
-    }
+namespace Microsoft.Cci
+{
+
+	#pragma warning disable 1591
+
+	public static class SourceDummy
+	{
+
+		public static ICompilation Compilation {
+			get {
+				if (SourceDummy.compilation == null)
+					Interlocked.CompareExchange(ref SourceDummy.compilation, new DummyCompilation(), null);
+				return SourceDummy.compilation;
+			}
+		}
+		private static ICompilation 		/*?*/compilation;
+
+		public static IPrimarySourceDocument PrimarySourceDocument {
+			get {
+				if (SourceDummy.primarySourceDocument == null)
+					Interlocked.CompareExchange(ref SourceDummy.primarySourceDocument, new DummyPrimarySourceDocument(), null);
+				return SourceDummy.primarySourceDocument;
+			}
+		}
+		private static IPrimarySourceDocument 		/*?*/primarySourceDocument;
+
+		/// <summary>
+		/// This source location behaves as the notorious FeeFee: a source
+		/// context which exists in the PDB file, but which debuggers do not
+		/// stop at. It is needed, e.g., to mark the first IL operation in a
+		/// method body if it does not have any real source location (such as
+		/// compiler generated closure initialization code). Without that, the
+		/// debugger appears to not step into method calls.
+		/// </summary>
+		public static IPrimarySourceLocation PrimarySourceLocation {
+			get {
+				if (SourceDummy.primarySourceLocation == null)
+					Interlocked.CompareExchange(ref SourceDummy.primarySourceLocation, new DummyPrimarySourceLocation(), null);
+				return SourceDummy.primarySourceLocation;
+			}
+		}
+		private static IPrimarySourceLocation 		/*?*/primarySourceLocation;
+
+		public static ISourceDocument SourceDocument {
+			get {
+				if (SourceDummy.sourceDocument == null)
+					Interlocked.CompareExchange(ref SourceDummy.sourceDocument, new DummySourceDocument(), null);
+				return SourceDummy.sourceDocument;
+			}
+		}
+		private static ISourceDocument 		/*?*/sourceDocument;
+
+		public static ISourceDocumentEdit SourceDocumentEdit {
+			get {
+				if (SourceDummy.sourceDocumentEdit == null)
+					Interlocked.CompareExchange(ref SourceDummy.sourceDocumentEdit, new DummySourceDocumentEdit(), null);
+				return SourceDummy.sourceDocumentEdit;
+			}
+		}
+		private static ISourceDocumentEdit 		/*?*/sourceDocumentEdit;
+
+		public static ISourceLocation SourceLocation {
+			get {
+				if (SourceDummy.sourceLocation == null)
+					Interlocked.CompareExchange(ref SourceDummy.sourceLocation, new DummySourceLocation(), null);
+				return SourceDummy.sourceLocation;
+			}
+		}
+		private static ISourceLocation 		/*?*/sourceLocation;
+
+	}
+
+	public sealed class DummyCompilation : ICompilation
+	{
+
+		#region ICompilation Members
+
+		public IPlatformType PlatformType {
+			get { return Dummy.PlatformType; }
+		}
+
+		public bool Contains(ISourceDocument sourceDocument)
+		{
+			return false;
+		}
+
+		public IUnitSet GetUnitSetFor(IName unitSetName)
+		{
+			return Dummy.UnitSet;
+		}
+
+		public IUnit Result {
+			get { return Dummy.Unit; }
+		}
+
+		public IUnitSet UnitSet {
+			get { return Dummy.UnitSet; }
+		}
+
+		#endregion
+	}
+
+	public sealed class DummyPrimarySourceDocument : IPrimarySourceDocument
+	{
 
-    Guid IPrimarySourceDocument.Language {
-      get { return Guid.Empty; }
-    }
+		#region IPrimarySourceDocument Members
 
-    Guid IPrimarySourceDocument.LanguageVendor {
-      get { return Guid.Empty; }
-    }
+		Guid IPrimarySourceDocument.DocumentType {
+			get { return Guid.Empty; }
+		}
 
-    IPrimarySourceLocation IPrimarySourceDocument.PrimarySourceLocation {
-      get { return SourceDummy.PrimarySourceLocation; }
-    }
+		Guid IPrimarySourceDocument.Language {
+			get { return Guid.Empty; }
+		}
 
-    IPrimarySourceLocation IPrimarySourceDocument.GetPrimarySourceLocation(int position, int length) {
-      return SourceDummy.PrimarySourceLocation;
-    }
+		Guid IPrimarySourceDocument.LanguageVendor {
+			get { return Guid.Empty; }
+		}
 
-    void IPrimarySourceDocument.ToLineColumn(int position, out int line, out int column) {
-      line = 0;
-      column = 0;
-    }
+		IPrimarySourceLocation IPrimarySourceDocument.PrimarySourceLocation {
+			get { return SourceDummy.PrimarySourceLocation; }
+		}
 
-    #endregion
+		IPrimarySourceLocation IPrimarySourceDocument.GetPrimarySourceLocation(int position, int length)
+		{
+			return SourceDummy.PrimarySourceLocation;
+		}
 
-    #region ISourceDocument Members
+		void IPrimarySourceDocument.ToLineColumn(int position, out int line, out int column)
+		{
+			line = 0;
+			column = 0;
+		}
 
-    int ISourceDocument.CopyTo(int position, char[] destination, int destinationOffset, int length) {
-      return 0;
-    }
+		#endregion
 
-    ISourceLocation ISourceDocument.GetCorrespondingSourceLocation(ISourceLocation sourceLocationInPreviousVersionOfDocument) {
-      return SourceDummy.PrimarySourceLocation;
-    }
+		#region ISourceDocument Members
 
-    //^ [Pure]
-    ISourceLocation ISourceDocument.GetSourceLocation(int position, int length) {
-      return SourceDummy.PrimarySourceLocation;
-    }
+		int ISourceDocument.CopyTo(int position, char[] destination, int destinationOffset, int length)
+		{
+			return 0;
+		}
 
-    string ISourceDocument.GetText() {
-      return "";
-    }
+		ISourceLocation ISourceDocument.GetCorrespondingSourceLocation(ISourceLocation sourceLocationInPreviousVersionOfDocument)
+		{
+			return SourceDummy.PrimarySourceLocation;
+		}
 
-    //^ [Confined]
-    bool ISourceDocument.IsUpdatedVersionOf(ISourceDocument sourceDocument) {
-      return false;
-    }
+		//^ [Pure]
+		ISourceLocation ISourceDocument.GetSourceLocation(int position, int length)
+		{
+			return SourceDummy.PrimarySourceLocation;
+		}
+
+		string ISourceDocument.GetText()
+		{
+			return "";
+		}
 
-    int ISourceDocument.Length {
-      get { return 0; }
-    }
+		//^ [Confined]
+		bool ISourceDocument.IsUpdatedVersionOf(ISourceDocument sourceDocument)
+		{
+			return false;
+		}
 
-    string ISourceDocument.SourceLanguage {
-      get { return ""; }
-    }
+		int ISourceDocument.Length {
+			get { return 0; }
+		}
 
-    ISourceLocation ISourceDocument.SourceLocation {
-      get { return SourceDummy.PrimarySourceLocation; }
-    }
+		string ISourceDocument.SourceLanguage {
+			get { return ""; }
+		}
 
-    #endregion
+		ISourceLocation ISourceDocument.SourceLocation {
+			get { return SourceDummy.PrimarySourceLocation; }
+		}
 
-    #region IDocument Members
+		#endregion
 
-    string IDocument.Location {
-      get { return ""; }
-    }
+		#region IDocument Members
 
-    IName IDocument.Name {
-      get { return Dummy.Name; }
-    }
+		string IDocument.Location {
+			get { return ""; }
+		}
 
-    #endregion
+		IName IDocument.Name {
+			get { return Dummy.Name; }
+		}
 
-  }
+		#endregion
 
-  /// <summary>
-  /// Instances of this class behave as the notorious FeeFee: a source
-  /// context which exists in the PDB file, but which debuggers do not
-  /// stop at. It is needed, e.g., to mark the first IL operation in a
-  /// method body if it does not have any real source location (such as
-  /// compiler generated closure initialization code). Without that, the
-  /// debugger appears to not step into method calls.
-  /// </summary>
-  internal sealed class DummyPrimarySourceLocation : IPrimarySourceLocation {
+	}
 
-    #region IPrimarySourceLocation Members
+	/// <summary>
+	/// Instances of this class behave as the notorious FeeFee: a source
+	/// context which exists in the PDB file, but which debuggers do not
+	/// stop at. It is needed, e.g., to mark the first IL operation in a
+	/// method body if it does not have any real source location (such as
+	/// compiler generated closure initialization code). Without that, the
+	/// debugger appears to not step into method calls.
+	/// </summary>
+	public sealed class DummyPrimarySourceLocation : IPrimarySourceLocation
+	{
+
+		#region IPrimarySourceLocation Members
+
+		int IPrimarySourceLocation.EndColumn {
+			get { return 0; }
+		}
+
+		int IPrimarySourceLocation.EndLine {
+			get { return 0xfeefee; }
+		}
+
+		IPrimarySourceDocument IPrimarySourceLocation.PrimarySourceDocument {
+			get { return SourceDummy.PrimarySourceDocument; }
+		}
+
+		int IPrimarySourceLocation.StartColumn {
+			get { return 0; }
+		}
+
+		int IPrimarySourceLocation.StartLine {
+			get { return 0xfeefee; }
+		}
+
+		#endregion
+
+		#region ISourceLocation Members
+
+		//^ [Pure]
+		bool ISourceLocation.Contains(ISourceLocation location)
+		{
+			return false;
+		}
 
-    int IPrimarySourceLocation.EndColumn {
-      get { return 0; }
-    }
+		//^ [Pure]
+		int ISourceLocation.CopyTo(int offset, char[] destination, int destinationOffset, int length)
+		{
+			return 0;
+		}
 
-    int IPrimarySourceLocation.EndLine {
-      get { return 0x00feefee; }
-    }
+		int ISourceLocation.EndIndex {
+			get { return 0; }
+		}
 
-    IPrimarySourceDocument IPrimarySourceLocation.PrimarySourceDocument {
-      get { return SourceDummy.PrimarySourceDocument; }
-    }
+		int ISourceLocation.Length {
+			get { return 0; }
+		}
 
-    int IPrimarySourceLocation.StartColumn {
-      get { return 0; }
-    }
+		ISourceDocument ISourceLocation.SourceDocument {
+			get { return SourceDummy.PrimarySourceDocument; }
+		}
 
-    int IPrimarySourceLocation.StartLine {
-      get { return 0x00feefee; }
-    }
+		string ISourceLocation.Source {
+			get { return ""; }
+		}
 
-    #endregion
+		int ISourceLocation.StartIndex {
+			get { return 0; }
+		}
 
-    #region ISourceLocation Members
+		#endregion
 
-    //^ [Pure]
-    bool ISourceLocation.Contains(ISourceLocation location) {
-      return false;
-    }
+		#region ILocation Members
 
-    //^ [Pure]
-    int ISourceLocation.CopyTo(int offset, char[] destination, int destinationOffset, int length) {
-      return 0;
-    }
+		IDocument ILocation.Document {
+			get { return SourceDummy.PrimarySourceDocument; }
+		}
 
-    int ISourceLocation.EndIndex {
-      get { return 0; }
-    }
+		#endregion
+	}
 
-    int ISourceLocation.Length {
-      get { return 0; }
-    }
+	public sealed class DummySourceDocument : ISourceDocument
+	{
+		#region ISourceDocument Members
 
-    ISourceDocument ISourceLocation.SourceDocument {
-      get { return SourceDummy.PrimarySourceDocument; }
-    }
+		public int CopyTo(int position, char[] destination, int destinationOffset, int length)
+		{
+			return 0;
+		}
+
+		public ISourceLocation GetCorrespondingSourceLocation(ISourceLocation sourceLocationInPreviousVersionOfDocument)
+		{
+			return SourceDummy.SourceLocation;
+		}
+
+		//^ [Pure]
+		public ISourceLocation GetSourceLocation(int position, int length)
+		{
+			//^ assume false;
+			return SourceDummy.SourceLocation;
+		}
 
-    string ISourceLocation.Source {
-      get { return ""; }
-    }
+		public string GetText()
+		{
+			//^ assume false;
+			return string.Empty;
+		}
 
-    int ISourceLocation.StartIndex {
-      get { return 0; }
-    }
+		//^ [Confined]
+		public bool IsUpdatedVersionOf(ISourceDocument sourceDocument)
+		{
+			return sourceDocument == SourceDummy.SourceDocument;
+		}
 
-    #endregion
+		public string Location {
+			get { return string.Empty; }
+		}
 
-    #region ILocation Members
+		public int Length {
+//^ ensures result == 0;
+			get { return 0; }
+		}
 
-    IDocument ILocation.Document {
-      get { return SourceDummy.PrimarySourceDocument; }
-    }
+		public IName Name {
+			get { return Dummy.Name; }
+		}
 
-    #endregion
-  }
+		public string SourceLanguage {
+			get { return string.Empty; }
+		}
 
-  internal sealed class DummySourceDocument : ISourceDocument {
-    #region ISourceDocument Members
+		public ISourceLocation SourceLocation {
+			get { return SourceDummy.SourceLocation; }
+		}
 
-    public int CopyTo(int position, char[] destination, int destinationOffset, int length) {
-      return 0;
-    }
+		#endregion
 
-    public ISourceLocation GetCorrespondingSourceLocation(ISourceLocation sourceLocationInPreviousVersionOfDocument) {
-      return SourceDummy.SourceLocation;
-    }
+	}
 
-    //^ [Pure]
-    public ISourceLocation GetSourceLocation(int position, int length) {
-      //^ assume false;
-      return SourceDummy.SourceLocation;
-    }
+	public sealed class DummySourceDocumentEdit : ISourceDocumentEdit
+	{
 
-    public string GetText() {
-      //^ assume false;
-      return string.Empty;
-    }
+		#region ISourceDocumentEdit Members
 
-    //^ [Confined]
-    public bool IsUpdatedVersionOf(ISourceDocument sourceDocument) {
-      return sourceDocument == SourceDummy.SourceDocument;
-    }
+		public ISourceLocation SourceLocationBeforeEdit {
+			get { return SourceDummy.SourceLocation; }
+		}
 
-    public string Location {
-      get { return string.Empty; }
-    }
+		public ISourceDocument SourceDocumentAfterEdit {
+//^ assume false;
+			get { return SourceDummy.SourceDocument; }
+		}
 
-    public int Length {
-      get
-        //^ ensures result == 0;
-      {
-        return 0;
-      }
-    }
+		#endregion
 
-    public IName Name {
-      get { return Dummy.Name; }
-    }
+	}
 
-    public string SourceLanguage {
-      get { return string.Empty; }
-    }
+	public sealed class DummySourceLocation : ISourceLocation
+	{
 
-    public ISourceLocation SourceLocation {
-      get { return SourceDummy.SourceLocation; }
-    }
+		#region ISourceLocation Members
 
-    #endregion
+		//^ [Pure]
+		public bool Contains(ISourceLocation location)
+		{
+			return false;
+		}
 
-  }
+		//^ [Pure]
+		public int CopyTo(int offset, char[] destination, int destinationOffset, int length)
+		{
+			//^ assume false;
+			return 0;
+		}
 
-  internal sealed class DummySourceDocumentEdit : ISourceDocumentEdit {
+		public int EndIndex {
+//^ assume false;
+			get { return 0; }
+		}
 
-    #region ISourceDocumentEdit Members
+		public int Length {
+//^ ensures result == 0;
+//^ assume false;
+			get { return 0; }
+		}
 
-    public ISourceLocation SourceLocationBeforeEdit {
-      get { return SourceDummy.SourceLocation; }
-    }
+		public ISourceDocument SourceDocument {
+			get { return SourceDummy.SourceDocument; }
+		}
 
-    public ISourceDocument SourceDocumentAfterEdit {
-      get {
-        //^ assume false;
-        return SourceDummy.SourceDocument;
-      }
-    }
+		public string Source {
+//^ assume false;
+			get { return string.Empty; }
+		}
 
-    #endregion
+		public int StartIndex {
+			get { return 0; }
+		}
 
-  }
+		#endregion
 
-  internal sealed class DummySourceLocation : ISourceLocation {
+		#region ILocation Members
 
-    #region ISourceLocation Members
+		public IDocument Document {
+			get { return SourceDummy.SourceDocument; }
+		}
 
-    //^ [Pure]
-    public bool Contains(ISourceLocation location) {
-      return false;
-    }
+		#endregion
+	}
 
-    //^ [Pure]
-    public int CopyTo(int offset, char[] destination, int destinationOffset, int length) {
-      //^ assume false;
-      return 0;
-    }
-
-    public int EndIndex {
-      get {
-        //^ assume false;
-        return 0;
-      }
-    }
-
-    public int Length {
-      get
-        //^ ensures result == 0;
-      {
-        //^ assume false;
-        return 0;
-      }
-    }
-
-    public ISourceDocument SourceDocument {
-      get { return SourceDummy.SourceDocument; }
-    }
-
-    public string Source {
-      get {
-        //^ assume false;
-        return string.Empty;
-      }
-    }
-
-    public int StartIndex {
-      get { return 0; }
-    }
-
-    #endregion
-
-    #region ILocation Members
-
-    public IDocument Document {
-      get { return SourceDummy.SourceDocument; }
-    }
-
-    #endregion
-  }
-
-#pragma warning restore 1591
+	#pragma warning restore 1591
 }
